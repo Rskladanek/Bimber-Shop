@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Koszyk - Bimberek{% endblock %}
+{% block content %}
+<h2>Koszyk</h2>
+{% if cart_items %}
+<table class="table">
+  <thead>
+    <tr><th>Produkt</th><th>Ilość</th><th>Cena</th><th>Suma</th></tr>
+  </thead>
+  <tbody>
+  {% for prod, qty, item_total in cart_items %}
+    <tr>
+      <td>{{ prod.name }}</td>
+      <td>{{ qty }}</td>
+      <td>{{ prod.price }} PLN</td>
+      <td>{{ item_total }} PLN</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+<p class="text-end"><strong>Razem: {{ total }} PLN</strong></p>
+<a href="{{ url_for('shop.checkout') }}" class="btn btn-primary">Przejdź do zamówienia</a>
+{% else %}
+<p>Koszyk jest pusty.</p>
+{% endif %}
+{% endblock %}

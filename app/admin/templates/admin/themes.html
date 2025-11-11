@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Motywy kolorystyczne{% endblock %}
+
+{% block content %}
+<main class="theme-panel">
+  <h2 class="title">🎨 Motywy kolorystyczne</h2>
+
+  <div class="theme-list box">
+    {% if themes %}
+      <ul class="theme-items">
+        {% for t in themes %}
+          <li class="theme-item">
+            <div class="theme-info">
+              <span class="theme-name">„{{ t.name }}”</span>
+              <div class="theme-colors">
+                <span class="color-box" style="--clr: {{ t.color1 }}">1</span>
+                <span class="color-box" style="--clr: {{ t.color2 }}">2</span>
+                <span class="color-box" style="--clr: {{ t.color3 }}">3</span>
+              </div>
+            </div>
+            <a href="{{ url_for('admin.delete_theme', theme_id=t.id) }}" class="btn btn-danger btn-sm">Usuń</a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="no-themes">Brak motywów.</p>
+    {% endif %}
+  </div>
+
+  <div class="add-theme box">
+    <h3>Dodaj nowy motyw</h3>
+    <form method="POST" class="theme-form">
+      {{ form.hidden_tag() }}
+      <div class="form-group">
+        {{ form.name.label(class="form-label") }}
+        {{ form.name(class="form-control") }}
+      </div>
+      <div class="form-group">
+        {{ form.color1.label(class="form-label") }}
+        {{ form.color1(class="form-control", type="color") }}
+      </div>
+      <div class="form-group">
+        {{ form.color2.label(class="form-label") }}
+        {{ form.color2(class="form-control", type="color") }}
+      </div>
+      <div class="form-group">
+        {{ form.color3.label(class="form-label") }}
+        {{ form.color3(class="form-control", type="color") }}
+      </div>
+      {{ form.submit(class="btn btn-primary") }}
+    </form>
+  </div>
+</main>
+{% endblock %}

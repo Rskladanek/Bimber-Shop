@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Moderacja komentarzy{% endblock %}
+{% block content %}
+<h2>Moderacja komentarzy</h2>
+<table class="table table-striped">
+  <thead>
+    <tr><th>ID</th><th>Autor</th><th>Treść</th><th>Dotyczy</th><th>Akcje</th></tr>
+  </thead>
+  <tbody>
+  {% for c in comments %}
+    <tr>
+      <td>{{ c.id }}</td>
+      <td>{{ c.user.email }}</td>
+      <td>{{ c.content }}</td>
+      <td>
+        {% if c.product_id %}Produkt: {{ c.product.name }}{% endif %}
+        {% if c.post_id %}Post: {{ c.post.title }}{% endif %}
+      </td>
+      <td>
+        <a href="{{ url_for('admin.approve_comment', comment_id=c.id) }}" class="btn btn-success btn-sm">Akceptuj</a>
+        <a href="{{ url_for('admin.reject_comment', comment_id=c.id) }}" class="btn btn-danger btn-sm">Odrzuć</a>
+      </td>
+    </tr>
+  {% else %}
+    <tr><td colspan="5">Brak komentarzy do moderacji.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

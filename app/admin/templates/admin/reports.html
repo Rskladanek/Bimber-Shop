@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Zgłoszenia treści{% endblock %}
+{% block content %}
+<h2>Zgłoszenia treści</h2>
+<ul class="list-group">
+  {% for r in reports %}
+    <li class="list-group-item">
+      Zgłoszenie #{{ r.id }} -
+      {% if r.comment_id %}Komentarz ID {{ r.comment_id }}{% endif %}
+      {% if r.post_id %}Post ID {{ r.post_id }}{% endif %}
+      od {{ r.reporter.email }} -
+      {{ r.reason or "brak powodu" }}
+      <a href="{{ url_for('admin.report_detail', report_id=r.id) }}" class="btn btn-sm btn-primary float-end">Otwórz</a>
+    </li>
+  {% else %}
+    <li class="list-group-item">Brak otwartych zgłoszeń.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

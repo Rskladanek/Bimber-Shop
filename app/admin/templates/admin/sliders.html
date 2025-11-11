@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Slidery - Panel admina{% endblock %}
+
+{% block content %}
+{% include "admin/_toolbar.html" %}
+
+<div class="container-narrow py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h1 class="h4 mb-1">Slidery</h1>
+      <p class="text-muted small mb-0">
+        Zarządzaj banerami / sliderami na stronie głównej.
+      </p>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-lg-4">
+      <div class="card card-muted">
+        <div class="card-body">
+          <h2 class="h6 mb-3">Nowy slider</h2>
+          <form method="post">
+            {{ form.hidden_tag() }}
+            <div class="mb-3">
+              {{ form.name.label(class="form-label") }}
+              {{ form.name(class="form-control") }}
+            </div>
+            <div class="form-check mb-3">
+              {{ form.is_active(class="form-check-input") }}
+              {{ form.is_active.label(class="form-check-label small") }}
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">
+              Dodaj slider
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-8">
+      <div class="card bg-dark border-secondary">
+        <div class="card-body">
+          <h2 class="h6 mb-3">Istniejące slidery</h2>
+
+          {% if sliders %}
+            <div class="table-responsive">
+              <table class="table table-dark table-striped table-hover table-admin align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Nazwa</th>
+                    <th>Aktywny</th>
+                    <th>Akcja</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for s in sliders %}
+                  <tr>
+                    <td class="small text-muted">#{{ s.id }}</td>
+                    <td>{{ s.name }}</td>
+                    <td>
+                      {% if s.is_active %}
+                        <span class="badge bg-success">Tak</span>
+                      {% else %}
+                        <span class="badge bg-secondary">Nie</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if not s.is_active %}
+                      <a href="{{ url_for('admin.set_active_slider', slider_id=s.id) }}"
+                         class="btn btn-outline-light btn-sm">
+                        Ustaw jako aktywny
+                      </a>
+                      {% else %}
+                      <span class="small text-muted">Aktywny</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <p class="text-muted small mb-0">
+              Brak sliderów – dodaj pierwszy po lewej.
+            </p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

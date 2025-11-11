@@ -1,0 +1,40 @@
+{% set is_admin = (
+  current_user.is_authenticated and
+  (
+    (current_user.role == 'admin') if current_user.role is defined else false
+    or (current_user.is_admin) if current_user.is_admin is defined else false
+  )
+) %}
+{% if is_admin %}
+<div class="admin-toolbar mb-4">
+  <div class="admin-toolbar-label">
+    <i class="bi bi-tools me-1"></i> Panel sklepu
+  </div>
+  <div class="admin-toolbar-group">
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-sm btn-outline-light">
+      <i class="bi bi-speedometer2 me-1"></i> Dashboard
+    </a>
+    <a href="{{ url_for('admin.add_product') }}" class="btn btn-sm btn-outline-light">
+      <i class="bi bi-plus-circle me-1"></i> Dodaj produkt
+    </a>
+    <a href="{{ url_for('admin.list_products') }}" class="btn btn-sm btn-outline-light">
+      <i class="bi bi-box-seam me-1"></i> Produkty
+    </a>
+    <a href="{{ url_for('admin.sliders') }}" class="btn btn-sm btn-outline-light">
+      <i class="bi bi-images me-1"></i> Slidery
+    </a>
+    <a href="{{ url_for('admin.moderation_queue') }}" class="btn btn-sm btn-outline-light">
+      <i class="bi bi-chat-square-text me-1"></i> Komentarze
+    </a>
+    <a href="{{ url_for('admin.reports_list') }}" class="btn btn-sm btn-outline-light">
+      <i class="bi bi-flag me-1"></i> Zgłoszenia
+    </a>
+    <a href="{{ url_for('admin.themes') }}" class="btn btn-sm btn-outline-light">
+      <i class="bi bi-palette me-1"></i> Motywy
+    </a>
+    <a href="{{ url_for('blog.post_list') }}" class="btn btn-sm btn-outline-light">
+      <i class="bi bi-journal-text me-1"></i> Blog
+    </a>
+  </div>
+</div>
+{% endif %}

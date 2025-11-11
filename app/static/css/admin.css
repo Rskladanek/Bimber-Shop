@@ -1,0 +1,216 @@
+/* =========================================================
+   ADMIN PANEL – Bimberek
+   Czytelny dark mode z wysokim kontrastem
+   ========================================================= */
+
+/* Kolory bazowe */
+:root {
+  --admin-bg: #050816;
+  --admin-bg-elevated: #0b1020;
+  --admin-bg-elevated-soft: #111827;
+  --admin-border: #272b3f;
+  --admin-text: #f9fafb;
+  --admin-muted: #9ca3af;
+  --admin-accent: #a855f7;
+  --admin-accent-soft: rgba(168, 85, 247, 0.22);
+  --admin-danger: #f97373;
+  --admin-success: #22c55e;
+}
+
+/* Tło i tekst w panelu admina */
+body {
+  background: radial-gradient(circle at top left, #20194a 0, #050816 45%, #020617 100%);
+  color: var(--admin-text);
+}
+
+/* Ogólne teksty */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--admin-text);
+}
+
+p, li, dt, dd, span, small, label, input, textarea, select {
+  color: var(--admin-text);
+}
+
+/* Tekst "muted" – ale nadal widoczny */
+.text-muted,
+.text-muted-soft {
+  color: var(--admin-muted) !important;
+}
+
+/* Kontenery / karty */
+.card {
+  background-color: var(--admin-bg-elevated-soft);
+  border-color: var(--admin-border);
+  color: var(--admin-text);
+}
+
+.card.bg-dark {
+  background-color: var(--admin-bg-elevated) !important;
+  border-color: var(--admin-border) !important;
+  color: var(--admin-text) !important;
+}
+
+.card-header,
+.card-footer {
+  background-color: rgba(15, 23, 42, 0.9);
+  border-color: var(--admin-border);
+}
+
+/* Toolbar admina */
+.admin-toolbar,
+.admin-toolbar .btn {
+  color: var(--admin-text);
+}
+
+.admin-toolbar {
+  background: linear-gradient(to right, rgba(15, 23, 42, 0.9), rgba(30, 64, 175, 0.4));
+  border-bottom: 1px solid var(--admin-border);
+}
+
+/* Tabele / listy */
+table {
+  color: var(--admin-text);
+}
+
+.table thead th {
+  border-bottom-color: var(--admin-border);
+  color: var(--admin-muted);
+}
+
+.table tbody tr {
+  border-color: rgba(55, 65, 81, 0.7);
+}
+
+.table tbody tr:hover {
+  background-color: rgba(31, 41, 55, 0.7);
+}
+
+/* Formularze */
+.form-control,
+.form-select {
+  background-color: #020617;
+  border: 1px solid #374151;
+  color: var(--admin-text);
+}
+
+.form-control:focus,
+.form-select:focus {
+  background-color: #020617;
+  border-color: var(--admin-accent);
+  box-shadow: 0 0 0 1px var(--admin-accent-soft);
+  color: var(--admin-text);
+}
+
+.form-label {
+  color: var(--admin-text);
+}
+
+/* Przyciski */
+.btn-primary {
+  background: radial-gradient(circle at top left, #f973ff 0, #a855f7 40%, #7c3aed 100%);
+  border: none;
+  color: #f9fafb;
+  box-shadow: 0 12px 25px rgba(124, 58, 237, 0.35);
+}
+
+.btn-primary:hover {
+  filter: brightness(1.1);
+}
+
+.btn-outline-light {
+  border-color: #9ca3af;
+  color: var(--admin-text);
+}
+
+.btn-outline-light:hover {
+  background-color: rgba(156, 163, 175, 0.15);
+  color: var(--admin-text);
+}
+
+.btn-outline-secondary {
+  border-color: #4b5563;
+  color: var(--admin-muted);
+}
+
+.btn-outline-secondary:hover {
+  background-color: rgba(75, 85, 99, 0.25);
+  color: var(--admin-text);
+}
+
+/* Badges */
+.badge {
+  border-radius: 999px;
+  padding: 0.25rem 0.6rem;
+  font-weight: 500;
+}
+
+.bg-success-soft {
+  background-color: rgba(34, 197, 94, 0.16) !important;
+}
+
+.text-success {
+  color: var(--admin-success) !important;
+}
+
+.bg-warning-soft {
+  background-color: rgba(250, 204, 21, 0.16) !important;
+}
+
+.text-warning {
+  color: #facc15 !important;
+}
+
+/* Linki */
+a {
+  color: var(--admin-accent);
+}
+
+a:hover {
+  color: #c4b5fd;
+}
+
+/* Opis produktu / komentarze – w adminie */
+.card .small,
+.card p,
+.card li {
+  color: var(--admin-text);
+}
+
+/* Opis produktu, który pochodzi z HTML */
+.card .small span.text-muted,
+.card span.text-muted {
+  color: var(--admin-muted);
+}
+
+/* Alerty / flash messages */
+.alert {
+  border-radius: 0.75rem;
+  border: 1px solid var(--admin-border);
+  background-color: rgba(15, 23, 42, 0.95);
+  color: var(--admin-text);
+}
+
+.alert-success {
+  border-color: rgba(34, 197, 94, 0.5);
+}
+
+.alert-danger,
+.alert-warning {
+  border-color: rgba(248, 113, 113, 0.6);
+}
+
+/* Panel produktu – lekkie dopieszczenie layoutu */
+.container.py-4 > .row.g-4 > .col-lg-7 .card + .card {
+  margin-top: 0.75rem;
+}
+
+/* Dolny opis produktu – margines od krawędzi ekranu */
+.row.g-4.mt-3 .card {
+  background-color: var(--admin-bg-elevated-soft);
+}
+
+/* Na wszelki wypadek, żeby nic nie ginęło */
+* {
+  text-shadow: none;
+}

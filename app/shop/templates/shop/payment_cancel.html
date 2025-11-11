@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Płatność anulowana - Bimberek{% endblock %}
+{% block content %}
+<h2>Płatność anulowana</h2>
+<p>Twoja płatność została anulowana. Możesz wrócić do koszyka i spróbować ponownie.</p>
+<a href="{{ url_for('shop.cart_view') }}" class="btn btn-primary">Wróć do koszyka</a>
+{% endblock %}

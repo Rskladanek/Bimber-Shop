@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Zamówienie - Bimberek{% endblock %}
+{% block content %}
+<h2>Adres wysyłki</h2>
+<form method="POST">
+  {{ form.hidden_tag() }}
+  <div class="mb-3">
+    {{ form.address.label(class="form-label") }}
+    {{ form.address(class="form-control") }}
+  </div>
+  {{ form.submit(class="btn btn-primary") }}
+</form>
+{% endblock %}

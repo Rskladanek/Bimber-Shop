@@ -1,0 +1,429 @@
+/* =========================
+   HOME / INDEX
+   ========================= */
+
+.shop-home {
+  padding: 2.5rem 0 4rem;
+}
+
+.shop-hero {
+  margin-bottom: 2.5rem;
+}
+
+.shop-hero-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 2.5rem;
+  align-items: center;
+}
+
+.shop-hero-kicker {
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #a5b4fc;
+  margin-bottom: 0.75rem;
+}
+
+.shop-hero-title {
+  margin-bottom: 0.75rem;
+}
+
+.shop-hero-subtitle {
+  font-size: 0.9rem;
+  color: #9ca3af;
+  max-width: 32rem;
+}
+
+.shop-hero-actions {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.shop-hero-right {
+  padding: 1.1rem 1.15rem;
+  border-radius: 1.4rem;
+  border: 1px solid rgba(55, 65, 81, 0.9);
+  background: radial-gradient(circle at top left, rgba(30, 64, 175, 0.65), rgba(15, 23, 42, 0.9));
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.95);
+}
+
+.shop-hero-right h2 {
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+}
+
+.shop-hero-right ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.82rem;
+  color: #e5e7eb;
+}
+
+.shop-hero-right li + li {
+  margin-top: 0.35rem;
+}
+
+/* Kategorie (pigułki) */
+
+.shop-category-strip {
+  margin-bottom: 1.75rem;
+}
+
+.shop-category-label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #6b7280;
+  margin-bottom: 0.55rem;
+}
+
+.shop-category-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.shop-category-pill {
+  font-size: 0.78rem;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(55, 65, 81, 0.9);
+  background: rgba(15, 23, 42, 0.96);
+  color: #9ca3af;
+  transition: all 0.15s ease-out;
+}
+
+.shop-category-pill:hover {
+  border-color: rgba(129, 140, 248, 0.9);
+  color: #e5e7eb;
+  background: radial-gradient(circle at top left, rgba(31, 41, 55, 1), rgba(15, 23, 42, 1));
+}
+
+/* Sekcje produktowe */
+
+.shop-section {
+  margin-bottom: 2.8rem;
+}
+
+.shop-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 1rem;
+}
+
+.shop-section-title {
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #e5e7eb;
+}
+
+.shop-section-link {
+  font-size: 0.78rem;
+  color: #9ca3af;
+}
+
+.shop-section-link:hover {
+  color: #e5e7eb;
+}
+
+/* Grid produktów (home/dashboard) */
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 1.2rem;
+}
+
+.product-card {
+  position: relative;
+  background: rgba(15, 23, 42, 0.98);
+  border-radius: 1.1rem;
+  border: 1px solid rgba(31, 41, 55, 0.95);
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.95);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-card-media {
+  position: relative;
+}
+
+.product-card img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+}
+
+.product-card-badge {
+  position: absolute;
+  top: 0.7rem;
+  left: 0.7rem;
+}
+
+.product-card-body {
+  padding: 0.8rem 0.9rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.product-card-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.product-card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.82rem;
+  color: #9ca3af;
+}
+
+.product-card-price {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+.product-card-footer {
+  padding: 0.55rem 0.9rem 0.85rem;
+  border-top: 1px solid rgba(31, 41, 55, 0.9);
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* =========================
+   KARTA PRODUKTU
+   ========================= */
+
+.product-page {
+  padding: 2.5rem 0 4rem;
+}
+
+.product-page-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 2.5rem;
+  align-items: flex-start;
+}
+
+.product-gallery-card {
+  background: rgba(15, 23, 42, 0.98);
+  border-radius: 1.4rem;
+  border: 1px solid rgba(31, 41, 55, 0.95);
+  box-shadow: 0 18px 35px rgba(15, 23, 42, 0.98);
+}
+
+.product-gallery-main img {
+  width: 100%;
+  border-radius: 1.3rem 1.3rem 0.8rem 0.8rem;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.product-hero-meta {
+  padding: 0.85rem 1.1rem 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.product-main-block {
+  padding-top: 0.4rem;
+}
+
+.product-main-title {
+  font-size: 1.35rem;
+  font-weight: 600;
+  margin-bottom: 0.15rem;
+}
+
+.product-main-price {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #f9fafb;
+}
+
+.product-main-submeta {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin-top: 0.2rem;
+}
+
+.product-main-cta {
+  margin-top: 1.4rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.product-benefits-row {
+  margin-top: 1.7rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.75rem;
+}
+
+.product-benefit-card {
+  padding: 0.7rem 0.85rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(31, 41, 55, 0.95);
+  background: rgba(15, 23, 42, 0.96);
+  font-size: 0.78rem;
+}
+
+.product-benefit-title {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  font-size: 0.8rem;
+}
+
+.product-benefit-text {
+  color: #9ca3af;
+}
+
+/* Parametry */
+
+.product-params-card {
+  margin-top: 2rem;
+  border-radius: 1.1rem;
+  background: rgba(15, 23, 42, 0.98);
+  border: 1px solid rgba(31, 41, 55, 0.95);
+}
+
+.product-params-card h2 {
+  font-size: 0.88rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #9ca3af;
+  padding: 0.85rem 1rem 0;
+}
+
+.product-params-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.product-params-table th,
+.product-params-table td {
+  padding: 0.45rem 1rem;
+  border-top: 1px solid rgba(31, 41, 55, 0.9);
+}
+
+.product-params-table th {
+  width: 40%;
+  font-weight: 500;
+  color: #d1d5db;
+}
+
+/* Opis + komentarze */
+
+.product-extra {
+  max-width: 1120px;
+  margin: 2.2rem auto 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 1.8rem;
+}
+
+.product-description-card {
+  padding: 1rem 1.1rem 1.2rem;
+  border-radius: 1.1rem;
+  border: 1px solid rgba(31, 41, 55, 0.95);
+  background: rgba(15, 23, 42, 0.98);
+}
+
+.product-description-card h2 {
+  font-size: 0.95rem;
+  margin-bottom: 0.7rem;
+}
+
+.product-description-body {
+  font-size: 0.9rem;
+  color: #d1d5db;
+}
+
+/* Komentarze */
+
+.product-comments-card {
+  padding: 1rem 1.1rem 1.2rem;
+  border-radius: 1.1rem;
+  border: 1px solid rgba(31, 41, 55, 0.95);
+  background: rgba(15, 23, 42, 0.98);
+}
+
+.product-comments-card h2 {
+  font-size: 0.95rem;
+  margin-bottom: 0.8rem;
+}
+
+.comment-form-label {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin-bottom: 0.25rem;
+}
+
+.comment-textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.comment-item {
+  margin-top: 0.85rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid rgba(31, 41, 55, 0.9);
+  font-size: 0.86rem;
+}
+
+.comment-meta {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-bottom: 0.25rem;
+}
+
+/* =========================
+   RESPONSIVE
+   ========================= */
+
+@media (max-width: 992px) {
+  .shop-hero-inner {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .product-page-inner {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .product-extra {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 576px) {
+  .shop-home {
+    padding-top: 1.5rem;
+  }
+
+  .shop-hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .product-page-inner {
+    gap: 1.6rem;
+  }
+}

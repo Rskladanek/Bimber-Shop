@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Panel administracyjny{% endblock %}
+
+{% block content %}
+{% include "admin/_toolbar.html" %}
+<div class="container py-4">
+  <div class="mb-4">
+    <h1 class="h4 mb-1">Panel administracyjny</h1>
+    <p class="text-muted small mb-0">
+      Podgląd tego, co się dzieje w sklepie i na blogu.
+    </p>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="admin-metric-card p-3">
+        <div class="metric-label mb-1">Komentarze do akceptacji</div>
+        <div class="metric-value mb-2">{{ pending_comments }}</div>
+        <a href="{{ url_for('admin.moderation_queue') }}" class="btn btn-sm btn-outline-light">
+          Przejdź
+        </a>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="admin-metric-card p-3">
+        <div class="metric-label mb-1">Otwarte zgłoszenia</div>
+        <div class="metric-value mb-2">{{ open_reports }}</div>
+        <a href="{{ url_for('admin.reports_list') }}" class="btn btn-sm btn-outline-light">
+          Przejdź
+        </a>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="admin-metric-card p-3">
+        <div class="metric-label mb-1">Produkty</div>
+        <div class="metric-value mb-2">{{ products_count }}</div>
+        <a href="{{ url_for('admin.list_products') }}" class="btn btn-sm btn-outline-light">
+          Zobacz
+        </a>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="admin-metric-card p-3">
+        <div class="metric-label mb-1">Wpisy na blogu</div>
+        <div class="metric-value mb-2">{{ posts_count }}</div>
+        <a href="{{ url_for('blog.post_list') }}" class="btn btn-sm btn-outline-light">
+          Zobacz
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-lg-6">
+      <div class="card bg-dark border-secondary">
+        <div class="card-body">
+          <h2 class="h6 mb-3">Ostatnio dodane produkty</h2>
+          {% if last_products %}
+            <ul class="list-unstyled mb-0">
+              {% for p in last_products %}
+              <li class="d-flex align-items-center justify-content-between mb-2">
+                <div class="d-flex align-items-center gap-2">
+                  {% if p.image_filename %}
+                    <img src="{{ url_for('static', filename='images/products/' ~ p.image_filename) }}"
+                         class="admin-product-thumb" alt="{{ p.name }}">
+                  {% endif %}
+                  <div>
+                    <div class="small fw-semibold">{{ p.name }}</div>
+                    {% if p.category %}
+                      <div class="text-muted small">{{ p.category.name }}</div>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="text-end">
+                  <div class="small fw-semibold">{{ "%.2f"|format(p.price) }} PLN</div>
+                  <a href="{{ url_for('admin.view_product', product_id=p.id) }}"
+                     class="text-decoration-none small">
+                     Szczegóły →
+                  </a>
+                </div>
+              </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted small mb-0">Brak produktów.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card bg-dark border-secondary">
+        <div class="card-body">
+          <h2 class="h6 mb-3">Ostatnie wpisy blogowe</h2>
+          {% if last_posts %}
+            <ul class="list-unstyled mb-0">
+              {% for post in last_posts %}
+              <li class="d-flex justify-content-between align-items-center mb-2">
+                <div>
+                  <div class="small fw-semibold">{{ post.title }}</div>
+                  <div class="text-muted small">
+                    {{ post.created_at.strftime('%Y-%m-%d') if post.created_at else '' }}
+                  </div>
+                </div>
+                <a href="{{ url_for('blog.post_detail', post_id=post.id) }}"
+                   class="text-decoration-none small" target="_blank">
+                  Otwórz →
+                </a>
+              </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted small mb-0">Brak wpisów.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

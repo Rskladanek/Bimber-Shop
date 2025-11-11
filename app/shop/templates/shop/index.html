@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}Bimberek Białostocki{% endblock %}
+
+{% block content %}
+<div class="shop-home">
+  <div class="container-narrow-lg">
+
+    <!-- HERO -->
+    <section class="shop-hero">
+      <div class="shop-hero-inner">
+        <div>
+          {% if current_user.is_authenticated and current_user.role in ['admin', 'moderator'] %}
+          {% include "admin/_toolbar.html" %}
+          {% endif %}
+
+          <div class="shop-hero-kicker">Bimberek Białostocki</div>
+          <h1 class="shop-hero-title">
+            lokalne klimaty, konkretne %
+          </h1>
+          <p class="shop-hero-subtitle">
+            Małe partie, dopracowany smak, zero korpo-szajsu. Wybierz nalewkę,
+            zestaw prezentowy albo coś do kolekcji.
+          </p>
+
+          <div class="shop-hero-actions">
+            <a href="#bestsellery" class="btn btn-primary">
+              Zobacz bestsellery
+            </a>
+            <a href="#nowosci" class="btn btn-outline-light">
+              Nowości
+            </a>
+          </div>
+        </div>
+
+        <div class="shop-hero-right">
+          <h2>Dlaczego właśnie tu?</h2>
+          <ul>
+            <li>✔ Stripe – normalne płatności jak w dużym e-commerce.</li>
+            <li>🚚 Wysyłka z Polski, nie z piwnicy w Azji.</li>
+            <li>🧪 Sklep postawiony na Flasku, a nie na gotowym szablonie.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- KATEGORIE -->
+    {% if categories %}
+    <section class="shop-category-strip">
+      <div class="shop-category-label">Kategorie</div>
+      <div class="shop-category-pills">
+        {% for cat in categories %}
+        <a href="{{ url_for('shop.category_view', category_id=cat.id) }}"
+           class="shop-category-pill">
+          {{ cat.name }}
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    <!-- BESTSELLERY -->
+    <section id="bestsellery" class="shop-section">
+      <div class="shop-section-header">
+        <div class="shop-section-title">🔥 Bestsellery</div>
+        <a href="#nowosci" class="shop-section-link">Przejdź do nowości ↓</a>
+      </div>
+
+      {% if best_sellers %}
+        <div class="product-grid">
+          {% for p in best_sellers %}
+          <article class="product-card">
+            <div class="product-card-media">
+              {% if p.image_filename %}
+              <img src="{{ url_for('static', filename='images/products/' ~ p.image_filename) }}"
+                   alt="{{ p.name }}">
+              {% endif %}
+              <div class="product-card-badge">
+                <span class="badge-pill badge-soft-orange">Bestseller</span>
+              </div>
+            </div>
+            <div class="product-card-body">
+              <h3 class="product-card-title text-truncate-2">{{ p.name }}</h3>
+              <div class="product-card-meta">
+                <span class="product-card-price">{{ "%.2f"|format(p.price) }} PLN</span>
+                {% if p.category %}
+                  <span class="small text-muted-soft">{{ p.category.name }}</span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="product-card-footer">
+              <a href="{{ url_for('shop.product_detail', product_id=p.id) }}"
+                 class="btn btn-outline-primary btn-sm">
+                Zobacz
+              </a>
+            </div>
+          </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-muted-soft small mb-0">
+          Brak bestsellerów (oznacz kilka produktów jako takie w panelu).
+        </p>
+      {% endif %}
+    </section>
+
+    <!-- NOWOŚCI -->
+    <section id="nowosci" class="shop-section">
+      <div class="shop-section-header">
+        <div class="shop-section-title">🆕 Nowości</div>
+        <a href="#top" class="shop-section-link">Wróć na górę ↑</a>
+      </div>
+
+      {% if new_products %}
+        <div class="product-grid">
+          {% for p in new_products %}
+          <article class="product-card">
+            <div class="product-card-media">
+              {% if p.image_filename %}
+              <img src="{{ url_for('static', filename='images/products/' ~ p.image_filename) }}"
+                   alt="{{ p.name }}">
+              {% endif %}
+              <div class="product-card-badge">
+                <span class="badge-pill badge-soft-green">Nowość</span>
+              </div>
+            </div>
+            <div class="product-card-body">
+              <h3 class="product-card-title text-truncate-2">{{ p.name }}</h3>
+              <div class="product-card-meta">
+                <span class="product-card-price">{{ "%.2f"|format(p.price) }} PLN</span>
+                {% if p.category %}
+                  <span class="small text-muted-soft">{{ p.category.name }}</span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="product-card-footer">
+              <a href="{{ url_for('shop.product_detail', product_id=p.id) }}"
+                 class="btn btn-outline-primary btn-sm">
+                Zobacz
+              </a>
+            </div>
+          </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-muted-soft small mb-0">Brak nowości.</p>
+      {% endif %}
+    </section>
+
+  </div>
+</div>
+{% endblock %}

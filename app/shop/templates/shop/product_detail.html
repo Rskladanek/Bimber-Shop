@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="product-page">
+  <div class="container-narrow-lg">
+
+    <div class="product-page-inner">
+      <!-- LEWA: zdjęcie + meta -->
+      <div>
+        <div class="product-gallery-card">
+          {% if product.image_filename %}
+          <div class="product-gallery-main">
+            <img src="{{ url_for('static', filename='images/products/' ~ product.image_filename) }}"
+                 alt="{{ product.name }}">
+          </div>
+          {% else %}
+          <div class="product-gallery-main product-gallery-placeholder">
+            <div class="text-muted small">Brak zdjęcia produktu</div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- PRAWA: tytuł, cena, CTA -->
+      <div class="product-main-card">
+        <div class="product-main-header">
+          <h1 class="product-title mb-1">{{ product.name }}</h1>
+          <div class="product-price h4 mb-3">{{ '%.2f'|format(product.price) }} PLN</div>
+        </div>
+
+        <div class="product-main-badges mb-3">
+          <span class="badge bg-warning-soft text-warning me-1">🔥 Mała partia</span>
+          <span class="badge bg-primary-soft text-primary me-1">💳 Stripe / karta</span>
+          <span class="badge bg-success-soft text-success me-1">📦 Wysyłka z PL</span>
+        </div>
+
+        <div class="product-main-cta mb-3">
+          <form action="{{ url_for('shop.add_to_cart', product_id=product.id) }}"
+                method="post"
+                class="d-flex flex-wrap align-items-center gap-2">
+            {{ csrf_token() if csrf_token is defined else "" }}
+            <label class="me-1 mb-0 small text-muted">Ilość:</label>
+            <div class="input-group input-group-sm product-qty-input" style="width: 130px;">
+              <button type="button" class="btn btn-outline-light qty-btn" data-dir="-1">−</button>
+              <input type="number"
+                     name="quantity"
+                     min="1"
+                     value="1"
+                     class="form-control text-center"
+                     inputmode="numeric">
+              <button type="button" class="btn btn-outline-light qty-btn" data-dir="1">+</button>
+            </div>
+            {% if product.stock is not none %}
+            <span class="small text-muted ms-1">
+              Dostępne: {{ product.stock }} szt.
+            </span>
+            {% endif %}
+            <button type="submit" class="btn btn-primary ms-0 ms-sm-2">
+              <i class="bi bi-bag-plus me-1"></i> Dodaj do koszyka
+            </button>
+            <a href="{{ url_for('shop.index') }}" class="btn btn-outline-light ms-sm-1 mt-2 mt-sm-0">
+              ← Wróć do sklepu
+            </a>
+          </form>
+        </div>
+
+        <div class="product-benefits-row">
+          <div class="product-benefit-card">
+            <div class="product-benefit-title">Bezpieczna płatność</div>
+            <div class="product-benefit-text">
+              Stripe, normalny checkout jak w dużych sklepach, bez kombinowania.
+            </div>
+          </div>
+          <div class="product-benefit-card">
+            <div class="product-benefit-title">Wysyłka z PL</div>
+            <div class="product-benefit-text">
+              Paczka idzie z Polski, bez czekania miesiąc na coś z piwnicy w Azji.
+            </div>
+          </div>
+          <div class="product-benefit-card">
+            <div class="product-benefit-title">Wsparcie projektu</div>
+            <div class="product-benefit-text">
+              Kupujesz u autora sklepu, a nie w gotowym SaaSowym paście.
+            </div>
+          </div>
+        </div>
+
+        {% if product.volume_ml or product.abv or product.type or product.region %}
+        <div class="product-params-card mt-3">
+          <h2 class="h6 mb-2">Parametry (symboliczne)</h2>
+          <dl class="product-params">
+            {% if product.volume_ml %}
+            <div class="product-param-row">
+              <dt>Pojemność</dt>
+              <dd>{{ product.volume_ml }} ml</dd>
+            </div>
+            {% endif %}
+            {% if product.abv %}
+            <div class="product-param-row">
+              <dt>Moc</dt>
+              <dd>~{{ product.abv }}%</dd>
+            </div>
+            {% endif %}
+            {% if product.type %}
+            <div class="product-param-row">
+              <dt>Typ</dt>
+              <dd>{{ product.type }}</dd>
+            </div>
+            {% endif %}
+            {% if product.region %}
+            <div class="product-param-row">
+              <dt>Region</dt>
+              <dd>{{ product.region }}</dd>
+            </div>
+            {% endif %}
+          </dl>
+          <p class="text-muted-soft small mb-0">
+            Większe ilości / degustacje – napisz w uwagach przy zamówieniu.
+          </p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- OPIS + KOMENTARZE -->
+    <div class="product-extra mt-4">
+      <div class="product-description-card">
+        <h2>Opis produktu</h2>
+        <div class="product-description-body">
+          {% if product.description_html %}
+            {{ product.description_html|safe }}
+          {% else %}
+            <p class="text-muted-soft mb-0">
+              Cale te — uzupełnij opis produktu w panelu admina.
+            </p>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="product-comments-card">
+        <h2>Opinie</h2>
+
+        <form method="post">
+          {{ form.hidden_tag() }}
+          <div class="mb-2">
+            <div class="comment-form-label">Twój komentarz</div>
+            {{ form.content(class="form-control comment-textarea") }}
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm">
+            Dodaj komentarz
+          </button>
+          {% if not current_user.is_authenticated %}
+          <p class="small text-muted mt-1 mb-0">
+            Aby dodać komentarz jako zalogowany użytkownik, przejdź do logowania.
+          </p>
+          {% endif %}
+        </form>
+
+        {% if comments %}
+          <div class="product-comments-list mt-3">
+            {% for c in comments %}
+            <div class="comment-item mb-2">
+              <div class="comment-meta small text-muted-soft mb-1">
+                <span class="comment-author">
+                  {{ c.user.email if c.user and c.user.email else 'Użytkownik' }}
+                </span>
+                {% if c.created_at %}
+                  • {{ c.created_at.strftime('%Y-%m-%d %H:%M') }}
+                {% endif %}
+              </div>
+              <div class="comment-body">
+                {{ c.content }}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted-soft small mb-0 mt-2">Brak komentarzy.</p>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Prosty + / - dla ilości
+  document.addEventListener("DOMContentLoaded", function () {
+    const container = document.querySelector(".product-qty-input");
+    if (!container) return;
+    const input = container.querySelector("input[name='quantity']");
+    container.querySelectorAll(".qty-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        const dir = parseInt(btn.getAttribute("data-dir") || "0", 10);
+        let val = parseInt(input.value || "1", 10);
+        if (isNaN(val)) val = 1;
+        val += dir;
+        if (val < 1) val = 1;
+        input.value = val;
+      });
+    });
+  });
+</script>
+{% endblock %}

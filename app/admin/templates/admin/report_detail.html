@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Zgłoszenie #{{ report.id }}{% endblock %}
+{% block content %}
+<h2>Zgłoszenie #{{ report.id }}</h2>
+<p>
+  Zgłoszone:
+  {% if report.comment_id %}
+    Komentarz: "{{ report.comment.content }}" (autor: {{ report.comment.user.email }})
+  {% endif %}
+  {% if report.post_id %}
+    Post: "{{ report.post.title }}"
+  {% endif %}
+</p>
+<p>Zgłaszający: {{ report.reporter.email }}<br>
+Powód: {{ report.reason or "brak" }}<br>
+Status: {{ report.status }}</p>
+
+<h4>Dyskusja</h4>
+<div class="border p-2 mb-2" style="max-height: 200px; overflow-y: auto;">
+  {% for m in messages %}
+    <div class="mb-1">
+      <b>{{ m.sender.email }}</b> ({{ m.timestamp }}): {{ m.content }}
+    </div>
+  {% else %}
+    <p>Brak wiadomości.</p>
+  {% endfor %}
+</div>
+
+<form method="POST">
+  <div class="mb-3">
+    <textarea name="message" class="form-control" rows="3" placeholder="Odpowiedź / notatka dla zgłoszenia"></textarea>
+  </div>
+  <button type="submit" class="btn btn-primary btn-sm">Dodaj wiadomość</button>
+  <a href="{{ url_for('admin.close_report', report_id=report.id) }}" class="btn btn-success btn-sm">Zamknij zgłoszenie</a>
+</form>
+{% endblock %}

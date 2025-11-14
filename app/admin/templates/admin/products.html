@@ -1,83 +1,100 @@
 {% extends "base.html" %}
-{% block title %}Produkty - Panel admina{% endblock %}
+{% block title %}Produkty – Panel administracyjny{% endblock %}
 
 {% block content %}
 {% include "admin/_toolbar.html" %}
-<div class="container py-4">
+
+<div class="container my-4">
+
   <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-      <h1 class="h4 mb-1">Produkty</h1>
-      <p class="text-muted small mb-0">Zarządzanie asortymentem sklepu.</p>
+      <h1 class="h3 mb-1">Produkty</h1>
+      <p class="text-muted mb-0">
+        Zarządzaj ofertą sklepu, edytuj ceny, opisy i stany magazynowe.
+      </p>
     </div>
-    <a href="{{ url_for('admin.add_product') }}" class="btn btn-primary btn-sm">
-      <i class="bi bi-plus-circle me-1"></i> Dodaj produkt
-    </a>
+    <div>
+      <a href="{{ url_for('admin.new_product') }}" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-circle me-1"></i> Dodaj nowy produkt
+      </a>
+    </div>
   </div>
 
-  {% if products %}
-    <div class="table-responsive">
-      <table class="table table-dark table-striped table-hover align-middle table-admin">
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      <table class="table table-hover mb-0 align-middle">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Produkt</th>
-            <th>Cena</th>
-            <th>Kategoria</th>
-            <th>Akcje</th>
+            <th style="width: 60px;">ID</th>
+            <th>Nazwa</th>
+            <th style="width: 130px;">Cena</th>
+            <th style="width: 200px;">Kategoria</th>
+            <th style="width: 100px;">Stan</th>
+            <th style="width: 220px;" class="text-end">Akcje</th>
           </tr>
         </thead>
         <tbody>
           {% for p in products %}
           <tr>
-            <td class="small text-muted">#{{ p.id }}</td>
+            <td class="text-muted">{{ p.id }}</td>
             <td>
-              <div class="d-flex align-items-center gap-2">
-                {% if p.image_filename %}
-                  <img src="{{ url_for('static', filename='images/products/' ~ p.image_filename) }}"
-                       class="admin-product-thumb" alt="{{ p.name }}">
-                {% endif %}
-                <div>
-                  <div class="fw-semibold small">{{ p.name }}</div>
-                  {% if p.description_html %}
-                    <div class="text-muted small text-truncate" style="max-width: 260px;">
-                      {{ p.description_html|striptags }}
-                    </div>
-                  {% endif %}
-                </div>
-              </div>
-            </td>
-            <td>{{ "%.2f"|format(p.price) }} PLN</td>
-            <td class="small">
-              {{ p.category.name if p.category else "-" }}
+              <a href="{{ url_for('admin.product_detail', product_id=p.id) }}"
+                 class="text-decoration-none">
+                {{ p.name }}
+              </a>
             </td>
             <td>
-              <div class="d-flex flex-wrap gap-1">
-                <a href="{{ url_for('admin.view_product', product_id=p.id) }}"
-                   class="btn btn-sm btn-outline-light">
-                  Podgląd
-                </a>
-                <a href="{{ url_for('admin.edit_product', product_id=p.id) }}"
-                   class="btn btn-sm btn-outline-light">
-                  Edytuj
-                </a>
-                <a href="{{ url_for('shop.product_detail', product_id=p.id) }}"
-                   class="btn btn-sm btn-outline-primary" target="_blank">
-                  W sklepie
-                </a>
-                <a href="{{ url_for('admin.delete_product', product_id=p.id) }}"
-                   class="btn btn-sm btn-outline-danger"
-                   onclick="return confirm('Na pewno usunąć ten produkt?');">
+              {% if p.price is not none %}
+                {{ '%.2f'|format(p.price) }} zł
+              {% else %}
+                —
+              {% endif %}
+            </td>
+            <td>
+              {% if p.category %}
+                {{ p.category.name }}
+              {% else %}
+                <span class="text-muted">brak</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if p.stock is not none %}
+                {{ p.stock }}
+              {% else %}
+                0
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <a href="{{ url_for('admin.product_detail', product_id=p.id) }}"
+                 class="btn btn-sm btn-outline-secondary me-1">
+                Szczegóły
+              </a>
+              <a href="{{ url_for('admin.edit_product', product_id=p.id) }}"
+                 class="btn btn-sm btn-outline-primary me-1">
+                Edytuj
+              </a>
+              <form method="post"
+                    action="{{ url_for('admin.delete_product', product_id=p.id) }}"
+                    class="d-inline"
+                    onsubmit="return confirm('Na pewno usunąć ten produkt?');">
+                <button type="submit" class="btn btn-sm btn-outline-danger">
                   Usuń
-                </a>
-              </div>
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" class="text-center py-4">
+              Brak produktów w bazie. Dodaj pierwszy produkt, korzystając z przycisku
+              <strong>„Dodaj nowy produkt”</strong>.
             </td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
-  {% else %}
-    <p class="text-muted">Brak produktów.</p>
-  {% endif %}
+  </div>
+
 </div>
 {% endblock %}

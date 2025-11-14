@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Moderacja wpisów na blogu{% endblock %}
+
+{% block content %}
+<h2>Moderacja wpisów na blogu</h2>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Tytuł</th>
+      <th>Autor</th>
+      <th>Status</th>
+      <th>Data</th>
+      <th>Akcje</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in posts %}
+    <tr>
+      <td>{{ p.id }}</td>
+      <td>{{ p.title }}</td>
+      <td>
+        {% if p.author %}
+          {{ p.author.name or p.author.email }}
+        {% else %}
+          —
+        {% endif %}
+      </td>
+      <td>{{ p.status }}</td>
+      <td>
+        {% if p.created_at %}
+          {{ p.created_at.strftime("%Y-%m-%d %H:%M") }}
+        {% endif %}
+      </td>
+      <td>
+        <a href="{{ url_for('blog.post_detail', post_id=p.id) }}"
+           class="btn btn-sm btn-outline-secondary"
+           target="_blank">
+          Podgląd
+        </a>
+        <a href="{{ url_for('admin.approve_post', post_id=p.id) }}"
+           class="btn btn-sm btn-success">
+          Akceptuj
+        </a>
+        <a href="{{ url_for('admin.reject_post', post_id=p.id) }}"
+           class="btn btn-sm btn-danger">
+          Odrzuć
+        </a>
+      </td>
+    </tr>
+    {% else %}
+    <tr>
+      <td colspan="6">Brak wpisów do moderacji.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

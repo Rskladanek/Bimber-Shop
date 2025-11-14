@@ -1,86 +1,173 @@
+{# app/admin/templates/admin/add_product.html #}
 {% extends "base.html" %}
-{% block title %}{{ 'Edytuj produkt' if edit_mode else 'Dodaj produkt' }}{% endblock %}
 
 {% block content %}
+
 {% include "admin/_toolbar.html" %}
 
-<div class="container py-4">
+<div class="container my-4">
+
   <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
       <h1 class="h4 mb-1">
-        {{ 'Edytuj produkt' if edit_mode else 'Dodaj produkt' }}
+        {% if edit_mode %}Edytuj produkt{% else %}Nowy produkt{% endif %}
       </h1>
-      <p class="text-muted small mb-0">
-        Formularz do zarządzania asortymentem sklepu Bimberek.
-      </p>
+      {% if edit_mode and product %}
+        <div class="text-secondary small">
+          ID #{{ product.id }}
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+      {% if edit_mode and product %}
+        <a href="{{ url_for('shop.product_detail', product_id=product.id) }}"
+           class="btn btn-sm btn-outline-light"
+           target="_blank" rel="noopener">
+          <i class="bi bi-eye"></i> Podgląd w sklepie
+        </a>
+      {% endif %}
+      <a href="{{ url_for('admin.list_products') }}" class="btn btn-sm btn-outline-light">
+        <i class="bi bi-arrow-left"></i> Lista produktów
+      </a>
     </div>
   </div>
 
-  <form method="POST" enctype="multipart/form-data" class="card bg-dark border-secondary p-3">
-    {{ form.hidden_tag() }}
+  <div class="card bg-dark border-secondary">
+    <div class="card-body">
 
-    <div class="mb-3">
-      {{ form.name.label(class="form-label") }}
-      {{ form.name(class="form-control") }}
-      {% for error in form.name.errors %}
-        <div class="invalid-feedback d-block small">{{ error }}</div>
-      {% endfor %}
-    </div>
+      <form method="POST" enctype="multipart/form-data" novalidate>
+        {{ form.hidden_tag() }}
 
-    <div class="row g-3">
-      <div class="col-md-4">
-        <div class="mb-3">
-          {{ form.price.label(class="form-label") }}
-          {{ form.price(class="form-control") }}
-          {% for error in form.price.errors %}
-            <div class="invalid-feedback d-block small">{{ error }}</div>
-          {% endfor %}
+        {% if form.errors %}
+          <div class="alert alert-danger small">
+            <strong>Popraw błędy w formularzu:</strong>
+            <ul class="mb-0">
+              {% for field_name, field_errors in form.errors.items() %}
+                {% for error in field_errors %}
+                  <li>{{ error }}</li>
+                {% endfor %}
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+
+        <div class="row g-4">
+
+          <div class="col-12 col-lg-8">
+            <div class="mb-3">
+              {{ form.name.label(class="form-label") }}
+              {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else "")) }}
+              {% for error in form.name.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+              {% endfor %}
+            </div>
+
+            <div class="row g-3">
+              <div class="col-12 col-md-6">
+                <div class="mb-3">
+                  {{ form.price.label(class="form-label") }}
+                  <div class="input-group">
+                    {{ form.price(class="form-control" + (" is-invalid" if form.price.errors else "")) }}
+                    <span class="input-group-text">PLN</span>
+                  </div>
+                  {% for error in form.price.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                  {% endfor %}
+                </div>
+              </div>
+
+              <div class="col-12 col-md-6">
+                <div class="mb-3">
+                  {{ form.stock.label(class="form-label") }}
+                  {{ form.stock(class="form-control" + (" is-invalid" if form.stock.errors else ""), min="0") }}
+                  <div class="form-text text-secondary">
+                    Możesz zostawić puste, jeśli nie śledzisz stanu magazynowego.
+                  </div>
+                  {% for error in form.stock.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              {{ form.category.label(class="form-label") }}
+              {{ form.category(class="form-select" + (" is-invalid" if form.category.errors else "")) }}
+              {% if not form.category.choices or form.category.choices|length == 1 %}
+                <div class="form-text text-secondary">
+                  Na razie masz tylko opcję „brak kategorii”. Kategorie możesz dodać później w bazie.
+                </div>
+              {% endif %}
+              {% for error in form.category.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+              {% endfor %}
+            </div>
+
+            <div class="mb-3">
+              {{ form.description.label(class="form-label") }}
+              {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), rows="6") }}
+              <div class="form-text text-secondary">
+                Krótki, konkretny opis – dlaczego klient ma to kupić.
+              </div>
+              {% for error in form.description.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-4">
+            {% if edit_mode and product and product.image_filename %}
+              <div class="mb-3">
+                <label class="form-label">Aktualne zdjęcie</label>
+                <div class="border border-secondary rounded-3 bg-black p-2 text-center">
+                  <img src="{{ url_for('static', filename='images/products/' ~ product.image_filename) }}"
+                       alt="{{ product.name }}" class="img-fluid rounded-2">
+                </div>
+                <div class="form-text text-secondary mt-1">
+                  Jeśli nie wybierzesz nowego pliku, zostanie to zdjęcie.
+                </div>
+              </div>
+            {% endif %}
+
+            <div class="mb-3">
+              {{ form.image.label(class="form-label") }}
+              {{ form.image(class="form-control" + (" is-invalid" if form.image.errors else "")) }}
+              <div class="form-text text-secondary">
+                Dozwolone formaty: JPG, JPEG, PNG, GIF.
+              </div>
+              {% for error in form.image.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+              {% endfor %}
+            </div>
+
+          </div>
+
         </div>
-      </div>
 
-      <div class="col-md-4">
-        <div class="mb-3">
-          {{ form.stock.label(class="form-label") }}
-          {{ form.stock(class="form-control") }}
-          {% for error in form.stock.errors %}
-            <div class="invalid-feedback d-block small">{{ error }}</div>
-          {% endfor %}
+        <div class="d-flex justify-content-between align-items-center pt-3 mt-3 border-top border-secondary">
+          <div class="text-secondary small">
+            {% if edit_mode %}
+              Po zapisaniu zmiany będą od razu widoczne w sklepie.
+            {% else %}
+              Po zapisaniu produkt zacznie być widoczny zgodnie z logiką sklepu.
+            {% endif %}
+          </div>
+          <div class="d-flex gap-2">
+            <a href="{{ url_for('admin.list_products') }}" class="btn btn-outline-light">
+              Anuluj
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save me-1"></i> {{ form.submit.label.text }}
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div class="col-md-4">
-        <div class="mb-3">
-          {{ form.category.label(class="form-label") }}
-          {{ form.category(class="form-select") }}
-          {% for error in form.category.errors %}
-            <div class="invalid-feedback d-block small">{{ error }}</div>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
+      </form>
 
-    <div class="mb-3">
-      {{ form.description.label(class="form-label") }}
-      {{ form.description(class="form-control", rows=4) }}
-      {% for error in form.description.errors %}
-        <div class="invalid-feedback d-block small">{{ error }}</div>
-      {% endfor %}
     </div>
+  </div>
 
-    <div class="mb-3">
-      {{ form.image.label(class="form-label") }}
-      {{ form.image(class="form-control") }}
-      {% for error in form.image.errors %}
-        <div class="invalid-feedback d-block small">{{ error }}</div>
-      {% endfor %}
-      <div class="form-text small text-muted">
-        Obsługiwane formaty: JPG, PNG, GIF.
-      </div>
-    </div>
-
-    <div class="d-flex justify-content-end">
-      {{ form.submit(class="btn btn-primary") }}
-    </div>
-  </form>
 </div>
+
 {% endblock %}

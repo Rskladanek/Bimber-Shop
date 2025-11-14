@@ -1,5 +1,11 @@
+# app/admin/routes.py
+from __future__ import annotations
+
 import os
 import uuid
+from decimal import Decimal
+from werkzeug.utils import secure_filename
+from werkzeug.routing import BuildError
 
 from flask import (
     render_template,
@@ -7,204 +13,373 @@ from flask import (
     url_for,
     flash,
     request,
-    jsonify,
     current_app,
 )
 from flask_login import login_required, current_user
 
 from . import admin_bp
-from .forms import ThemeForm, SliderForm
+from .forms import ProductForm, SliderForm
 from app.extensions import db
-from app.models import (
-    Comment,
-    Report,
-    ModeratorMessage,
-    Theme,
-    Slider,
-    SliderItem,
-    Product,
-    Category,
-    Post,
-)
-from app.shop.forms import ProductForm
+from app.models import Product, Category, Comment, Post, Slider, Report
 
+
+# =============================
+#  Helpers / security
+# =============================
 
 def admin_required() -> bool:
-    """Sprawdza, czy użytkownik ma rolę admin/moderator."""
-    if not current_user.is_authenticated or getattr(current_user, "role", "user") not in [
-        "admin",
-        "moderator",
-    ]:
-        flash("Brak uprawnień.", "danger")
+    """Prosta bramka – dopuszcza tylko adminów."""
+    if not current_user.is_authenticated:
         return False
-    return True
+    if getattr(current_user, "is_admin", False):
+        return True
+    if getattr(current_user, "role", None) == "admin":
+        return True
+    return False
 
+
+def _product_upload_path() -> str:
+    return os.path.join(current_app.root_path, "static", "images", "products")
+
+
+def _save_image(file_storage):
+    """Zapisuje obraz i zwraca nazwę pliku lub None."""
+    if not file_storage:
+        return None
+    filename = secure_filename(file_storage.filename or "")
+    if not filename:
+        return None
+    base, ext = os.path.splitext(filename)
+    unique_name = f"{uuid.uuid4().hex}{ext.lower()}"
+    dst_dir = _product_upload_path()
+    os.makedirs(dst_dir, exist_ok=True)
+    file_storage.save(os.path.join(dst_dir, unique_name))
+    return unique_name
+
+
+def _category_choices():
+    """Lista opcji dla SelectField (0 oznacza brak kategorii)."""
+    cats = Category.query.order_by(Category.name).all()
+    return [(0, "--- brak kategorii ---")] + [(c.id, c.name) for c in cats]
+
+
+# --- OPIS: różne nazwy pola w modelu ---
+_DESC_FIELDS = ("description", "description_html", "desc", "body", "content")
+
+
+def _get_description(product: Product) -> str:
+    for field in _DESC_FIELDS:
+        if hasattr(product, field):
+            val = getattr(product, field)
+            if val:
+                return str(val)
+    return ""
+
+
+def _set_description(product: Product, text: str) -> bool:
+    for field in _DESC_FIELDS:
+        if hasattr(product, field):
+            setattr(product, field, text or "")
+            return True
+    return False
+
+
+# --- ILOŚĆ: różne nazwy pola w modelu ---
+_STOCK_FIELDS = (
+    "stock", "quantity", "qty", "inventory", "amount",
+    "in_stock", "units", "on_hand", "available",
+)
+
+
+def _get_stock(product: Product) -> int:
+    for field in _STOCK_FIELDS:
+        if hasattr(product, field):
+            try:
+                val = getattr(product, field)
+                if val is None:
+                    return 0
+                return int(val)
+            except Exception:
+                return 0
+    return 0
+
+
+def _set_stock(product: Product, value: int) -> bool:
+    for field in _STOCK_FIELDS:
+        if hasattr(product, field):
+            setattr(product, field, int(value))
+            return True
+    return False
+
+
+def _endpoint_exists(name: str) -> bool:
+    """Sprawdza, czy endpoint istnieje – żeby nie wysadzać dashboardu url_for-em."""
+    try:
+        url_for(name)
+        return True
+    except BuildError:
+        return False
+
+
+# =============================
+#  Dashboard
+# =============================
 
 @admin_bp.route("/")
 @login_required
 def dashboard():
     if not admin_required():
+        flash("Brak uprawnień do panelu administratora.", "danger")
         return redirect(url_for("shop.index"))
 
-    pending_comments = Comment.query.filter_by(status="oczekuje").count()
-    open_reports = Report.query.filter_by(status="open").count()
-    products_count = Product.query.count()
-    posts_count = Post.query.count()
-    last_products = Product.query.order_by(Product.id.desc()).limit(5).all()
-    last_posts = Post.query.order_by(Post.created_at.desc()).limit(5).all()
+    # --- PODSTAWOWE METRYKI ---
+    products_count = db.session.query(Product).count()
+    categories_count = db.session.query(Category).count()
+    comments_count = db.session.query(Comment).count()
+
+    # komentarze oczekujące
+    try:
+        comments_pending = Comment.query.filter(Comment.status != "zaakceptowany").count()
+    except Exception:
+        try:
+            comments_pending = Comment.query.filter_by(status="oczekuje").count()
+        except Exception:
+            comments_pending = 0
+
+    # blog – ilość wpisów / oczekujące
+    posts_total = 0
+    posts_pending = 0
+    try:
+        posts_total = Post.query.count()
+        posts_pending = Post.query.filter(Post.status != "zaakceptowany").count()
+    except Exception:
+        pass
+
+    # slidery – ilość + aktywny
+    try:
+        sliders_count = Slider.query.count()
+        active_slider = Slider.query.filter_by(is_active=True).first()
+    except Exception:
+        sliders_count = 0
+        active_slider = None
+
+    # raporty / zgłoszenia
+    try:
+        reports_open = Report.query.filter_by(status="open").count()
+    except Exception:
+        reports_open = 0
+
+    reports_endpoint_exists = _endpoint_exists("admin.reports")
+    themes_endpoint_exists = _endpoint_exists("admin.themes")
+
+    # ostatnie produkty (po ID – auto-inkrement)
+    latest_products = (
+        Product.query
+        .order_by(Product.id.desc())
+        .limit(10)
+        .all()
+    )
+
+    # najnowsze komentarze
+    try:
+        latest_comments = (
+            Comment.query
+            .order_by(Comment.created_at.desc())
+            .limit(10)
+            .all()
+        )
+    except Exception:
+        latest_comments = []
+
+    # produkty z niskim stanem magazynowym (<= 3 szt.)
+    low_stock_products = []
+    low_stock_count = 0
+    try:
+        low_stock_query = Product.query.filter(Product.stock <= 3)
+        low_stock_count = low_stock_query.count()
+        low_stock_products = (
+            low_stock_query
+            .order_by(Product.stock.asc(), Product.id.asc())
+            .limit(20)
+            .all()
+        )
+    except Exception:
+        low_stock_products = []
+        low_stock_count = 0
 
     return render_template(
         "admin/dashboard.html",
-        pending_comments=pending_comments,
-        open_reports=open_reports,
         products_count=products_count,
-        posts_count=posts_count,
-        last_products=last_products,
-        last_posts=last_posts,
+        categories_count=categories_count,
+        comments_count=comments_count,
+        comments_pending=comments_pending,
+        posts_total=posts_total,
+        posts_pending=posts_pending,
+        sliders_count=sliders_count,
+        active_slider=active_slider,
+        reports_open=reports_open,
+        reports_endpoint_exists=reports_endpoint_exists,
+        themes_endpoint_exists=themes_endpoint_exists,
+        latest_products=latest_products,
+        latest_comments=latest_comments,
+        low_stock_products=low_stock_products,
+        low_stock_count=low_stock_count,
     )
 
 
-# ===================== KOMENTARZE / MODERACJA =====================
+# =============================
+#  Moderacja komentarzy
+# =============================
 
-@admin_bp.route("/moderation")
+@admin_bp.route("/comments/moderation")
 @login_required
-def moderation_queue():
+def moderate_comments():
     if not admin_required():
+        flash("Brak uprawnień do panelu administratora.", "danger")
         return redirect(url_for("shop.index"))
+
     comments = (
         Comment.query.filter_by(status="oczekuje")
         .order_by(Comment.created_at.desc())
         .all()
     )
+
     return render_template("admin/moderation.html", comments=comments)
 
 
-@admin_bp.route("/comment/<int:comment_id>/approve")
+@admin_bp.route("/comments/<int:comment_id>/approve")
 @login_required
-def approve_comment(comment_id):
+def approve_comment(comment_id: int):
     if not admin_required():
+        flash("Brak uprawnień do panelu administratora.", "danger")
         return redirect(url_for("shop.index"))
+
     comment = Comment.query.get_or_404(comment_id)
     comment.status = "zaakceptowany"
     db.session.commit()
-    flash("Komentarz zaakceptowany.", "success")
-    return redirect(url_for("admin.moderation_queue"))
+    flash("Komentarz został zaakceptowany.", "success")
+    return redirect(request.referrer or url_for("admin.moderate_comments"))
 
 
-@admin_bp.route("/comment/<int:comment_id>/reject")
+@admin_bp.route("/comments/<int:comment_id>/reject")
 @login_required
-def reject_comment(comment_id):
+def reject_comment(comment_id: int):
     if not admin_required():
+        flash("Brak uprawnień do panelu administratora.", "danger")
         return redirect(url_for("shop.index"))
+
     comment = Comment.query.get_or_404(comment_id)
     comment.status = "odrzucony"
     db.session.commit()
-    flash("Komentarz odrzucony.", "info")
-    return redirect(url_for("admin.moderation_queue"))
+    flash("Komentarz został odrzucony.", "info")
+    return redirect(request.referrer or url_for("admin.moderate_comments"))
 
 
-# ===================== ZGŁOSZENIA =====================
+# =============================
+#  Moderacja wpisów na blogu
+# =============================
 
-@admin_bp.route("/reports")
+@admin_bp.route("/blog/moderation")
 @login_required
-def reports_list():
+def moderate_posts():
     if not admin_required():
+        flash("Brak uprawnień do panelu administratora.", "danger")
         return redirect(url_for("shop.index"))
-    reports = Report.query.filter_by(status="open").all()
-    return render_template("admin/reports.html", reports=reports)
 
-
-@admin_bp.route("/report/<int:report_id>", methods=["GET", "POST"])
-@login_required
-def report_detail(report_id):
-    if not admin_required():
-        return redirect(url_for("shop.index"))
-    report = Report.query.get_or_404(report_id)
-
-    messages = (
-        ModeratorMessage.query.filter_by(report_id=report.id)
-        .order_by(ModeratorMessage.timestamp.asc())
+    posts = (
+        Post.query.filter(Post.status != "zaakceptowany")
+        .order_by(Post.created_at.desc())
         .all()
     )
 
-    if request.method == "POST":
-        content = (request.form.get("message") or "").strip()
-        if content:
-            msg = ModeratorMessage(
-                report_id=report.id,
-                sender_id=current_user.id,
-                content=content,
-            )
-            db.session.add(msg)
-            db.session.commit()
-            flash("Wiadomość dodana.", "success")
-            return redirect(url_for("admin.report_detail", report_id=report.id))
-        else:
-            flash("Treść wiadomości nie może być pusta.", "warning")
-
-    return render_template(
-        "admin/report_detail.html",
-        report=report,
-        messages=messages,
-    )
+    return render_template("admin/blog_posts.html", posts=posts)
 
 
-@admin_bp.route("/report/<int:report_id>/close")
+@admin_bp.route("/blog/<int:post_id>/approve")
 @login_required
-def close_report(report_id):
+def approve_post(post_id: int):
     if not admin_required():
+        flash("Brak uprawnień do panelu administratora.", "danger")
         return redirect(url_for("shop.index"))
-    report = Report.query.get_or_404(report_id)
-    report.status = "closed"
+
+    post = Post.query.get_or_404(post_id)
+    post.status = "zaakceptowany"
     db.session.commit()
-    flash("Zgłoszenie zamknięte.", "info")
-    return redirect(url_for("admin.reports_list"))
+    flash("Wpis został opublikowany.", "success")
+    return redirect(request.referrer or url_for("admin.moderate_posts"))
 
 
-# ===================== MOTYWY =====================
-
-@admin_bp.route("/themes", methods=["GET", "POST"])
+@admin_bp.route("/blog/<int:post_id>/reject")
 @login_required
-def themes():
+def reject_post(post_id: int):
     if not admin_required():
+        flash("Brak uprawnień do panelu administratora.", "danger")
         return redirect(url_for("shop.index"))
 
-    form = ThemeForm()
-    themes = Theme.query.order_by(Theme.name).all()
+    post = Post.query.get_or_404(post_id)
+    post.status = "odrzucony"
+    db.session.commit()
+    flash("Wpis został oznaczony jako odrzucony.", "info")
+    return redirect(request.referrer or url_for("admin.moderate_posts"))
 
+
+# =============================
+#  Slidery
+# =============================
+
+@admin_bp.route("/sliders", methods=["GET", "POST"])
+@login_required
+def sliders():
+    if not admin_required():
+        flash("Brak uprawnień do panelu administratora.", "danger")
+        return redirect(url_for("shop.index"))
+
+    form = SliderForm()
     if form.validate_on_submit():
-        theme = Theme(
-            name=form.name.data,
-            color1=form.color1.data,
-            color2=form.color2.data,
-            color3=form.color3.data,
+        # jeżeli zaznaczony jako aktywny – wyłącz wszystkie inne
+        if form.is_active.data:
+            Slider.query.update({Slider.is_active: False})
+
+        slider = Slider(
+            name=form.name.data.strip(),
+            is_active=bool(form.is_active.data),
         )
-        db.session.add(theme)
+        db.session.add(slider)
         db.session.commit()
-        flash("Motyw dodany.", "success")
-        return redirect(url_for("admin.themes"))
+        flash("Slider został utworzony.", "success")
+        return redirect(url_for("admin.sliders"))
 
-    return render_template("admin/themes.html", form=form, themes=themes)
+    sliders = Slider.query.order_by(Slider.id.asc()).all()
+    return render_template("admin/sliders.html", form=form, sliders=sliders)
 
 
-@admin_bp.route("/themes/<int:theme_id>/delete")
+@admin_bp.route("/sliders/set-active/<int:slider_id>")
 @login_required
-def delete_theme(theme_id):
+def set_active_slider(slider_id: int):
     if not admin_required():
+        flash("Brak uprawnień do panelu administratora.", "danger")
         return redirect(url_for("shop.index"))
-    theme = Theme.query.get_or_404(theme_id)
-    db.session.delete(theme)
+
+    slider = Slider.query.get_or_404(slider_id)
+
+    # wyłącz wszystkie slidery
+    Slider.query.update({Slider.is_active: False})
+    slider.is_active = True
     db.session.commit()
-    flash("Motyw usunięty.", "info")
-    return redirect(url_for("admin.themes"))
+
+    flash(f"Aktywny slider ustawiony na \"{slider.name}\".", "success")
+    return redirect(url_for("admin.sliders"))
 
 
-# ===================== PRODUKTY =====================
+# =============================
+#  Produkty CRUD
+# =============================
 
 @admin_bp.route("/products")
 @login_required
 def list_products():
     if not admin_required():
+        flash("Brak uprawnień do panelu administratora.", "danger")
         return redirect(url_for("shop.index"))
     products = Product.query.order_by(Product.id.desc()).all()
     return render_template("admin/products.html", products=products)
@@ -212,195 +387,109 @@ def list_products():
 
 @admin_bp.route("/products/new", methods=["GET", "POST"])
 @login_required
-def add_product():
+def new_product():
     if not admin_required():
+        flash("Brak uprawnień do panelu administratora.", "danger")
         return redirect(url_for("shop.index"))
 
     form = ProductForm()
-
-    categories = Category.query.order_by(Category.name).all()
-    form.category.choices = [(0, "--- brak kategorii ---")] + [
-        (c.id, c.name) for c in categories
-    ]
+    form.category.choices = _category_choices()
 
     if form.validate_on_submit():
-        category_id = form.category.data or None
-        if category_id == 0:
-            category_id = None
-
         product = Product(
             name=form.name.data,
-            price=form.price.data,
-            description_html=form.description.data or "",
-            category_id=category_id,
+            price=Decimal(str(form.price.data or 0)),
         )
+        _set_description(product, form.description.data or "")
+        _set_stock(product, form.stock.data or 0)
 
-        if form.image.data:
-            upload_folder = os.path.join(
-                current_app.root_path, "static", "images", "products"
-            )
-            os.makedirs(upload_folder, exist_ok=True)
+        if form.category.data:
+            if form.category.data != 0:
+                product.category_id = form.category.data
 
-            orig_filename = form.image.data.filename
-            ext = os.path.splitext(orig_filename)[1].lower() or ".jpg"
-            filename = f"{uuid.uuid4().hex}{ext}"
-            filepath = os.path.join(upload_folder, filename)
-            form.image.data.save(filepath)
+        image = request.files.get("image")
+        if image and image.filename:
+            filename = _save_image(image)
             product.image_filename = filename
 
         db.session.add(product)
         db.session.commit()
-        flash("Produkt dodany.", "success")
+        flash("Produkt został dodany.", "success")
         return redirect(url_for("admin.list_products"))
 
-    return render_template("admin/add_product.html", form=form)
+    return render_template("admin/add_product.html", form=form, edit_mode=False, product=None)
 
 
 @admin_bp.route("/products/<int:product_id>")
 @login_required
-def view_product(product_id):
+def product_detail(product_id: int):
     if not admin_required():
+        flash("Brak uprawnień do panelu administratora.", "danger")
         return redirect(url_for("shop.index"))
-
     product = Product.query.get_or_404(product_id)
-    comments_accepted = Comment.query.filter_by(
-        product_id=product.id, status="zaakceptowany"
-    ).count()
-    comments_pending = Comment.query.filter_by(
-        product_id=product.id, status="oczekuje"
-    ).count()
-    comments_rejected = Comment.query.filter_by(
-        product_id=product.id, status="odrzucony"
-    ).count()
-
-    return render_template(
-        "admin/product_detail.html",
-        product=product,
-        comments_accepted=comments_accepted,
-        comments_pending=comments_pending,
-        comments_rejected=comments_rejected,
+    comments = (
+        Comment.query.filter_by(product_id=product.id)
+        .order_by(Comment.created_at.desc())
+        .limit(5)
+        .all()
     )
+    return render_template("admin/product_detail.html", product=product, comments=comments)
 
 
 @admin_bp.route("/products/<int:product_id>/edit", methods=["GET", "POST"])
 @login_required
-def edit_product(product_id):
+def edit_product(product_id: int):
     if not admin_required():
+        flash("Brak uprawnień do panelu administratora.", "danger")
         return redirect(url_for("shop.index"))
 
     product = Product.query.get_or_404(product_id)
-    form = ProductForm(obj=product)
 
-    categories = Category.query.order_by(Category.name).all()
-    form.category.choices = [(0, "--- brak kategorii ---")] + [
-        (c.id, c.name) for c in categories
-    ]
+    # Wstępne wartości do formularza
+    initial_desc = _get_description(product)
+    initial_stock = _get_stock(product)
+
+    form = ProductForm(
+        name=product.name,
+        price=product.price,
+        description=initial_desc,
+        stock=initial_stock,
+    )
+    form.category.choices = _category_choices()
     form.category.data = product.category_id or 0
 
     if form.validate_on_submit():
-        category_id = form.category.data or None
-        if category_id == 0:
-            category_id = None
-
         product.name = form.name.data
-        product.price = form.price.data
-        product.description_html = form.description.data or ""
-        product.category_id = category_id
+        product.price = Decimal(str(form.price.data or 0))
+        _set_description(product, form.description.data or "")
+        _set_stock(product, form.stock.data or 0)
 
-        if form.image.data:
-            upload_folder = os.path.join(
-                current_app.root_path, "static", "images", "products"
-            )
-            os.makedirs(upload_folder, exist_ok=True)
+        if form.category.data:
+            if form.category.data != 0:
+                product.category_id = form.category.data
+            else:
+                product.category_id = None
 
-            orig_filename = form.image.data.filename
-            ext = os.path.splitext(orig_filename)[1].lower() or ".jpg"
-            filename = f"{uuid.uuid4().hex}{ext}"
-            filepath = os.path.join(upload_folder, filename)
-            form.image.data.save(filepath)
+        image = request.files.get("image")
+        if image and image.filename:
+            filename = _save_image(image)
             product.image_filename = filename
 
         db.session.commit()
-        flash("Produkt zaktualizowany.", "success")
-        return redirect(url_for("admin.view_product", product_id=product.id))
+        flash("Produkt został zaktualizowany.", "success")
+        return redirect(url_for("admin.product_detail", product_id=product.id))
 
-    return render_template("admin/add_product.html", form=form, edit_mode=True)
+    return render_template("admin/add_product.html", form=form, edit_mode=True, product=product)
 
 
-@admin_bp.route("/products/<int:product_id>/delete")
+@admin_bp.route("/products/<int:product_id>/delete", methods=["POST"])
 @login_required
-def delete_product(product_id):
+def delete_product(product_id: int):
     if not admin_required():
+        flash("Brak uprawnień do panelu administratora.", "danger")
         return redirect(url_for("shop.index"))
-
     product = Product.query.get_or_404(product_id)
     db.session.delete(product)
     db.session.commit()
-    flash("Produkt usunięty.", "info")
+    flash("Produkt został usunięty.", "success")
     return redirect(url_for("admin.list_products"))
-
-
-# ===================== SLIDERY =====================
-
-@admin_bp.route("/sliders", methods=["GET", "POST"])
-@login_required
-def sliders():
-    if not admin_required():
-        return redirect(url_for("shop.index"))
-
-    form = SliderForm()
-
-    if form.validate_on_submit():
-        slider = Slider(
-            name=form.name.data,
-            is_active=form.is_active.data,
-        )
-        if slider.is_active:
-            Slider.query.update({Slider.is_active: False})
-        db.session.add(slider)
-        db.session.commit()
-        flash("Slider dodany.", "success")
-        return redirect(url_for("admin.sliders"))
-
-    sliders = Slider.query.order_by(Slider.id.asc()).all()
-    return render_template("admin/sliders.html", sliders=sliders, form=form)
-
-
-@admin_bp.route("/sliders/<int:slider_id>/set_active")
-@login_required
-def set_active_slider(slider_id):
-    if not admin_required():
-        return redirect(url_for("shop.index"))
-    slider = Slider.query.get_or_404(slider_id)
-
-    Slider.query.update({Slider.is_active: False})
-    slider.is_active = True
-    db.session.commit()
-    flash(f"Slider '{slider.name}' ustawiony jako aktywny.", "success")
-    return redirect(url_for("admin.sliders"))
-
-
-@admin_bp.route("/sliders/<int:slider_id>/order", methods=["POST"])
-@login_required
-def save_slider_order(slider_id):
-    if not admin_required():
-        return jsonify({"error": "Brak uprawnień"}), 403
-
-    slider = Slider.query.get_or_404(slider_id)
-    data = request.get_json()
-    if not data:
-        return jsonify({"error": "Brak danych"}), 400
-
-    try:
-        for item_data in data:
-            item_id = int(item_data.get("item_id"))
-            order_index = int(item_data.get("order"))
-            item = SliderItem.query.get(item_id)
-            if item and item.slider_id == slider.id:
-                item.order_index = order_index
-
-        db.session.commit()
-        return jsonify({"status": "success"})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500

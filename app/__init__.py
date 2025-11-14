@@ -3,6 +3,7 @@
 from flask import Flask
 from .config import Config
 from .extensions import db, migrate, login_manager, oauth
+from .cli import register_cli
 
 # import modeli i blueprintów
 from .models import User
@@ -53,5 +54,8 @@ def create_app(config_class=Config) -> Flask:
     #   itd.
     app.register_blueprint(shop_bp)
     app.register_blueprint(webhooks_bp, url_prefix="/webhooks")
+
+    # Dodanie kategorii:
+    register_cli(app)
 
     return app

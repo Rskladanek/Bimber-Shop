@@ -3,117 +3,283 @@
 
 {% block content %}
 {% include "admin/_toolbar.html" %}
-<div class="container py-4">
-  <div class="mb-4">
-    <h1 class="h4 mb-1">Panel administracyjny</h1>
-    <p class="text-muted small mb-0">
-      Podgląd tego, co się dzieje w sklepie i na blogu.
-    </p>
-  </div>
 
+<div class="container my-4">
+
+  <h1 class="mb-4">Panel administracyjny</h1>
+
+  {# --- GŁÓWNE KAFLE PODSUMOWANIA --- #}
   <div class="row g-3 mb-4">
+    <!-- Produkty -->
     <div class="col-md-3">
-      <div class="admin-metric-card p-3">
-        <div class="metric-label mb-1">Komentarze do akceptacji</div>
-        <div class="metric-value mb-2">{{ pending_comments }}</div>
-        <a href="{{ url_for('admin.moderation_queue') }}" class="btn btn-sm btn-outline-light">
-          Przejdź
-        </a>
+      <div class="card h-100 text-center">
+        <div class="card-body">
+          <h5 class="card-title mb-1">Produkty</h5>
+          <p class="display-6 mb-1">{{ products_count }}</p>
+          <p class="text-muted small mb-3">
+            {{ low_stock_count or 0 }} z niskim stanem magazynowym
+          </p>
+          <a href="{{ url_for('admin.list_products') }}" class="btn btn-sm btn-primary">
+            Zobacz wszystkie
+          </a>
+        </div>
       </div>
     </div>
+
+    <!-- Kategorie -->
     <div class="col-md-3">
-      <div class="admin-metric-card p-3">
-        <div class="metric-label mb-1">Otwarte zgłoszenia</div>
-        <div class="metric-value mb-2">{{ open_reports }}</div>
-        <a href="{{ url_for('admin.reports_list') }}" class="btn btn-sm btn-outline-light">
-          Przejdź
-        </a>
+      <div class="card h-100 text-center">
+        <div class="card-body">
+          <h5 class="card-title mb-1">Kategorie</h5>
+          <p class="display-6 mb-1">{{ categories_count }}</p>
+          <p class="text-muted small mb-3">
+            Struktura katalogu sklepu
+          </p>
+          <a href="{{ url_for('admin.list_products') }}" class="btn btn-sm btn-outline-primary">
+            Zarządzaj katalogiem
+          </a>
+        </div>
       </div>
     </div>
+
+    <!-- Komentarze -->
     <div class="col-md-3">
-      <div class="admin-metric-card p-3">
-        <div class="metric-label mb-1">Produkty</div>
-        <div class="metric-value mb-2">{{ products_count }}</div>
-        <a href="{{ url_for('admin.list_products') }}" class="btn btn-sm btn-outline-light">
-          Zobacz
-        </a>
+      <div class="card h-100 text-center">
+        <div class="card-body">
+          <h5 class="card-title mb-1">Komentarze</h5>
+          <p class="display-6 mb-1">{{ comments_count }}</p>
+          <p class="text-muted small mb-3">
+            {{ comments_pending or 0 }} oczekuje moderacji
+          </p>
+          <a href="{{ url_for('admin.moderate_comments') }}" class="btn btn-sm btn-outline-primary">
+            Moderuj komentarze
+          </a>
+        </div>
       </div>
     </div>
+
+    <!-- Slidery -->
     <div class="col-md-3">
-      <div class="admin-metric-card p-3">
-        <div class="metric-label mb-1">Wpisy na blogu</div>
-        <div class="metric-value mb-2">{{ posts_count }}</div>
-        <a href="{{ url_for('blog.post_list') }}" class="btn btn-sm btn-outline-light">
-          Zobacz
-        </a>
+      <div class="card h-100 text-center">
+        <div class="card-body">
+          <h5 class="card-title mb-1">Slidery</h5>
+          <p class="display-6 mb-1">{{ sliders_count }}</p>
+          <p class="text-muted small mb-3">
+            {% if active_slider %}
+              Aktywny: „{{ active_slider.name }}”
+            {% else %}
+              Brak aktywnego slidera
+            {% endif %}
+          </p>
+          <a href="{{ url_for('admin.sliders') }}" class="btn btn-sm btn-outline-primary">
+            Zarządzaj sliderami
+          </a>
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="row g-3">
-    <div class="col-lg-6">
-      <div class="card bg-dark border-secondary">
+  {# --- DRUGI RZĄD KAFELKÓW: BLOG + ZGŁOSZENIA --- #}
+  <div class="row g-3 mb-4">
+    <!-- Blog -->
+    <div class="col-md-4">
+      <div class="card h-100 text-center">
         <div class="card-body">
-          <h2 class="h6 mb-3">Ostatnio dodane produkty</h2>
-          {% if last_products %}
-            <ul class="list-unstyled mb-0">
-              {% for p in last_products %}
-              <li class="d-flex align-items-center justify-content-between mb-2">
-                <div class="d-flex align-items-center gap-2">
-                  {% if p.image_filename %}
-                    <img src="{{ url_for('static', filename='images/products/' ~ p.image_filename) }}"
-                         class="admin-product-thumb" alt="{{ p.name }}">
-                  {% endif %}
-                  <div>
-                    <div class="small fw-semibold">{{ p.name }}</div>
-                    {% if p.category %}
-                      <div class="text-muted small">{{ p.category.name }}</div>
-                    {% endif %}
-                  </div>
-                </div>
-                <div class="text-end">
-                  <div class="small fw-semibold">{{ "%.2f"|format(p.price) }} PLN</div>
-                  <a href="{{ url_for('admin.view_product', product_id=p.id) }}"
-                     class="text-decoration-none small">
-                     Szczegóły →
-                  </a>
-                </div>
-              </li>
-              {% endfor %}
-            </ul>
-          {% else %}
-            <p class="text-muted small mb-0">Brak produktów.</p>
-          {% endif %}
+          <h5 class="card-title mb-1">Blog</h5>
+          <p class="display-6 mb-1">{{ posts_total or 0 }}</p>
+          <p class="text-muted small mb-3">
+            {{ posts_pending or 0 }} wpisów czeka na akceptację
+          </p>
+          <a href="{{ url_for('admin.moderate_posts') }}" class="btn btn-sm btn-outline-primary">
+            Moderuj wpisy
+          </a>
         </div>
       </div>
     </div>
 
-    <div class="col-lg-6">
-      <div class="card bg-dark border-secondary">
+    <!-- Zgłoszenia / raporty -->
+    <div class="col-md-4">
+      <div class="card h-100 text-center">
         <div class="card-body">
-          <h2 class="h6 mb-3">Ostatnie wpisy blogowe</h2>
-          {% if last_posts %}
-            <ul class="list-unstyled mb-0">
-              {% for post in last_posts %}
-              <li class="d-flex justify-content-between align-items-center mb-2">
-                <div>
-                  <div class="small fw-semibold">{{ post.title }}</div>
-                  <div class="text-muted small">
-                    {{ post.created_at.strftime('%Y-%m-%d') if post.created_at else '' }}
-                  </div>
-                </div>
-                <a href="{{ url_for('blog.post_detail', post_id=post.id) }}"
-                   class="text-decoration-none small" target="_blank">
-                  Otwórz →
-                </a>
-              </li>
-              {% endfor %}
-            </ul>
-          {% else %}
-            <p class="text-muted small mb-0">Brak wpisów.</p>
-          {% endif %}
+          <h5 class="card-title mb-1">Zgłoszenia</h5>
+          <p class="display-6 mb-1">{{ reports_open or 0 }}</p>
+          <p class="text-muted small mb-3">
+            Otwarte zgłoszenia użytkowników
+          </p>
+          <a href="{{ url_for('admin.reports') if reports_endpoint_exists else '#' }}"
+             class="btn btn-sm btn-outline-secondary {% if not reports_endpoint_exists %}disabled{% endif %}">
+            Panel zgłoszeń
+          </a>
         </div>
       </div>
+    </div>
+
+    <!-- Slot na przyszłość (np. użytkownicy / motywy) -->
+    <div class="col-md-4">
+      <div class="card h-100 text-center">
+        <div class="card-body">
+          <h5 class="card-title mb-1">Konfiguracja</h5>
+          <p class="display-6 mb-1"><i class="bi bi-gear"></i></p>
+          <p class="text-muted small mb-3">
+            Motywy, wygląd, ustawienia sklepu.
+          </p>
+          <a href="{{ url_for('admin.themes') if themes_endpoint_exists else '#' }}"
+             class="btn btn-sm btn-outline-secondary {% if not themes_endpoint_exists %}disabled{% endif %}">
+            Motywy kolorystyczne
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# --- OSTATNIO DODANE PRODUKTY / KOMENTARZE --- #}
+  <div class="row g-3 mb-4">
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header">
+          Ostatnio dodane produkty
+        </div>
+        <div class="card-body p-0">
+          <table class="table mb-0 table-striped">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nazwa</th>
+                <th>Cena</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in latest_products %}
+              <tr>
+                <td>{{ p.id }}</td>
+                <td>{{ p.name }}</td>
+                <td>
+                  {% if p.price is not none %}
+                    {{ '%.2f'|format(p.price) }} zł
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <a href="{{ url_for('admin.product_detail', product_id=p.id) }}"
+                     class="btn btn-sm btn-outline-secondary">
+                    Szczegóły
+                  </a>
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="4" class="text-center py-3">
+                  Brak produktów do wyświetlenia.
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header">
+          Najnowsze komentarze
+        </div>
+        <div class="card-body p-0">
+          <table class="table mb-0 table-striped">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Autor</th>
+                <th>Dotyczy</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for c in latest_comments %}
+              <tr>
+                <td>{{ c.id }}</td>
+                <td>
+                  {% if c.user %}
+                    {{ c.user.email }}
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+                <td>
+                  {% if c.product %}
+                    Produkt: {{ c.product.name }}
+                  {% elif c.post %}
+                    Wpis: {{ c.post.title }}
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+                <td>{{ c.status }}</td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="4" class="text-center py-3">
+                  Brak komentarzy do wyświetlenia.
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div class="card-footer text-end">
+          <a href="{{ url_for('admin.moderate_comments') }}" class="btn btn-sm btn-outline-primary">
+            Przejdź do moderacji
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# --- NISKI STAN MAGAZYNOWY --- #}
+  <div class="card mb-4">
+    <div class="card-header">
+      Niski stan magazynowy
+    </div>
+    <div class="card-body p-0">
+      <table class="table mb-0 table-striped">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nazwa</th>
+            <th>Stan</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in low_stock_products %}
+          <tr>
+            <td>{{ p.id }}</td>
+            <td>{{ p.name }}</td>
+            <td>
+              {% if p.stock is not none %}
+                {{ p.stock }}
+              {% else %}
+                0
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <a href="{{ url_for('admin.product_detail', product_id=p.id) }}"
+                 class="btn btn-sm btn-outline-secondary">
+                Edytuj
+              </a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="4" class="text-center py-3">
+              Brak produktów z niskim stanem magazynowym.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
 

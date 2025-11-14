@@ -1,19 +1,227 @@
 {% extends "base.html" %}
-{% block title %}{{ post.title }} - Blog{% endblock %}
-{% block content %}
-<h2>{{ post.title }}</h2>
-<small class="text-muted">Dodano: {{ post.created_at }}</small>
-<div class="mt-3 mb-4">
-  {{ post.content_html|safe }}
-</div>
+{% block title %}{{ post.title }} – Blog{% endblock %}
 
-<h4>Komentarze</h4>
-{% for c in comments %}
-  <div class="border p-2 mb-2 bg-light">
-    <div><strong>{{ c.user.email }}</strong> <small class="text-muted">{{ c.created_at }}</small></div>
-    <div>{{ c.content }}</div>
+{% block head %}
+<style>
+  .blog-article-page{
+    color:#e5e7eb;
+  }
+  .blog-article{
+    padding:18px 20px 20px;
+    border-radius:18px;
+    background:rgba(15,23,42,.96);
+    border:1px solid rgba(148,163,184,.35);
+    box-shadow:0 24px 60px rgba(15,23,42,.9);
+  }
+  .blog-article-meta{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    align-items:center;
+    font-size:.8rem;
+    color:#9ca3af;
+    text-transform:uppercase;
+    letter-spacing:.1em;
+  }
+  .blog-article-meta-pill{
+    padding:2px 9px;
+    border-radius:999px;
+    border:1px solid rgba(129,140,248,.75);
+    background:rgba(15,23,42,.9);
+  }
+  .blog-article-title{
+    margin-top:10px;
+    font-size:1.9rem;
+    font-weight:700;
+  }
+  .blog-article-sub{
+    margin-top:4px;
+    font-size:.98rem;
+    color:#9ca3af;
+  }
+  .blog-article-author{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-top:10px;
+    font-size:.85rem;
+    color:#9ca3af;
+  }
+  .blog-article-author .avatar{
+    width:30px;
+    height:30px;
+    border-radius:999px;
+    background:radial-gradient(circle at 30% 0%,#f97316,#ea580c);
+  }
+
+  .blog-article-cover{
+    margin:14px -4px 10px;
+    border-radius:16px;
+    overflow:hidden;
+    background:#020617;
+  }
+  .blog-article-cover img{
+    width:100%;
+    display:block;
+    object-fit:cover;
+    max-height:360px;
+  }
+
+  .blog-article-body{
+    margin-top:8px;
+    font-size:.98rem;
+    line-height:1.7;
+    color:#e5e7eb;
+  }
+  .blog-article-body h2,
+  .blog-article-body h3,
+  .blog-article-body h4{
+    margin-top:1.4rem;
+    margin-bottom:.4rem;
+    font-weight:600;
+  }
+  .blog-article-body p{
+    margin-bottom:.7rem;
+  }
+  .blog-article-body a{
+    color:#c4b5fd;
+    text-decoration:underline;
+    text-decoration-thickness:1px;
+  }
+  .blog-article-body ul,
+  .blog-article-body ol{
+    padding-left:1.3rem;
+    margin-bottom:.7rem;
+  }
+
+  .blog-tags{
+    margin-top:14px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+  }
+  .blog-tag{
+    padding:3px 9px;
+    border-radius:999px;
+    font-size:.8rem;
+    border:1px solid rgba(148,163,184,.6);
+    color:#cbd5f5;
+  }
+  .blog-nav{
+    margin-top:18px;
+    padding-top:12px;
+    border-top:1px dashed rgba(75,85,99,.9);
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    font-size:.85rem;
+  }
+  .blog-nav a{
+    color:#9ca3af;
+    text-decoration:none;
+  }
+  .blog-nav a:hover{
+    color:#c4b5fd;
+  }
+
+  @media (max-width:767.98px){
+    .blog-article{
+      padding:14px 14px 16px;
+    }
+    .blog-article-title{
+      font-size:1.5rem;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-3 blog-article-page">
+  <div class="row justify-content-center">
+    <div class="col-lg-9 col-xl-8">
+      <article class="blog-article">
+        <header>
+          <div class="blog-article-meta">
+            {% if post.category %}
+              <span class="blog-article-meta-pill">{{ post.category.name }}</span>
+            {% endif %}
+            <span>
+              {% if post.published_at %}
+                {{ post.published_at.strftime('%d.%m.%Y') }}
+              {% elif post.created_at %}
+                {{ post.created_at.strftime('%d.%m.%Y') }}
+              {% endif %}
+            </span>
+            {% if post.read_time %}
+              <span>· {{ post.read_time }} min czytania</span>
+            {% endif %}
+          </div>
+
+          <h1 class="blog-article-title">{{ post.title }}</h1>
+
+          {% if post.subtitle %}
+            <div class="blog-article-sub">{{ post.subtitle }}</div>
+          {% endif %}
+
+          <div class="blog-article-author">
+            <div class="avatar"></div>
+            <div>
+              <div>
+                {% if post.author and (post.author.name or post.author.email) %}
+                  {{ post.author.name or post.author.email }}
+                {% else %}
+                  Redakcja Bimberek
+                {% endif %}
+              </div>
+              <div style="font-size:.78rem;">Artykuł na blogu Bimberek Białostocki</div>
+            </div>
+          </div>
+        </header>
+
+        {% if post.cover_image %}
+        <div class="blog-article-cover">
+          <img src="{{ url_for('static', filename='images/blog/' ~ post.cover_image) }}" alt="{{ post.title }}">
+        </div>
+        {% endif %}
+
+        <div class="blog-article-body">
+          {% if post.body_html %}
+            {{ post.body_html|safe }}
+          {% else %}
+            {{ post.body|safe }}
+          {% endif %}
+        </div>
+
+        {% if post.tags %}
+        <div class="blog-tags">
+          {% for t in post.tags %}
+            <span class="blog-tag">
+              {% if t.name is defined %}{{ t.name }}{% else %}{{ t }}{% endif %}
+            </span>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="blog-nav">
+          <div>
+            {% if prev_post %}
+              <div class="text-muted-soft mb-1">Poprzedni wpis</div>
+              <a href="{{ url_for('blog.post_detail', post_id=prev_post.id) }}">
+                ‹ {{ prev_post.title }}
+              </a>
+            {% endif %}
+          </div>
+          <div class="text-end">
+            {% if next_post %}
+              <div class="text-muted-soft mb-1">Następny wpis</div>
+              <a href="{{ url_for('blog.post_detail', post_id=next_post.id) }}">
+                {{ next_post.title }} ›
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      </article>
+    </div>
   </div>
-{% else %}
-  <p>Brak komentarzy.</p>
-{% endfor %}
+</div>
 {% endblock %}

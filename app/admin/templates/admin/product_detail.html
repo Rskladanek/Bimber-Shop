@@ -1,198 +1,166 @@
+{# app/admin/templates/admin/product_detail.html #}
 {% extends "base.html" %}
-{% block title %}{{ product.name }} – Panel admina{% endblock %}
 
 {% block content %}
+
 {% include "admin/_toolbar.html" %}
 
-<div class="container py-4">
+<div class="container my-4">
 
-  <!-- Nagłówek strony -->
   <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
       <h1 class="h4 mb-1">{{ product.name }}</h1>
-      <p class="text-muted small mb-0">
-        Szczegóły produktu w panelu sklepu Bimberek.
-      </p>
-    </div>
-    <div class="d-flex gap-2">
-      <a href="{{ url_for('shop.product_detail', product_id=product.id) }}"
-         class="btn btn-outline-light btn-sm"
-         target="_blank" rel="noopener">
-        Podgląd w sklepie
-      </a>
-      <a href="{{ url_for('admin.list_products') }}"
-         class="btn btn-outline-secondary btn-sm">
-        Lista produktów
-      </a>
-    </div>
-  </div>
-
-  <!-- Główna sekcja: obraz + meta -->
-  <div class="row g-4">
-
-    <!-- LEWA: zdjęcie produktu -->
-    <div class="col-lg-5">
-      <div class="card bg-dark border-secondary h-100">
-        {% if product.image_filename %}
-        <img
-          src="{{ url_for('static', filename='images/products/' ~ product.image_filename) }}"
-          class="card-img-top"
-          alt="{{ product.name }}">
-        {% else %}
-        <div class="card-body d-flex align-items-center justify-content-center text-muted">
-          Brak zdjęcia produktu
-        </div>
+      <div class="text-secondary small">
+        ID #{{ product.id }}
+        {% if product.category %}
+          • Kategoria: {{ product.category.name }}
         {% endif %}
       </div>
     </div>
 
-    <!-- PRAWA: parametry / stan magazynowy / meta -->
-    <div class="col-lg-7">
+    <div class="d-flex flex-wrap gap-2">
+      <a href="{{ url_for('shop.product_detail', product_id=product.id) }}"
+         class="btn btn-sm btn-outline-light"
+         target="_blank" rel="noopener">
+        <i class="bi bi-eye"></i> Zobacz w sklepie
+      </a>
+      <a href="{{ url_for('admin.edit_product', product_id=product.id) }}"
+         class="btn btn-sm btn-outline-light">
+        <i class="bi bi-pencil-square"></i> Edytuj
+      </a>
+      <form action="{{ url_for('admin.delete_product', product_id=product.id) }}"
+            method="post" class="d-inline"
+            onsubmit="return confirm('Usunąć produkt {{ product.name|e }}?');">
+        <button type="submit" class="btn btn-sm btn-outline-light">
+          <i class="bi bi-trash"></i> Usuń
+        </button>
+      </form>
+      <a href="{{ url_for('admin.list_products') }}" class="btn btn-sm btn-outline-light">
+        <i class="bi bi-arrow-left"></i> Lista produktów
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-4">
+
+    <div class="col-12 col-lg-4">
+      <div class="card bg-dark border-secondary h-100">
+        <div class="card-body">
+          <h2 class="h6 text-secondary mb-3">Zdjęcie</h2>
+          {% if product.image_filename %}
+            <div class="border border-secondary rounded-3 bg-black p-2 text-center">
+              <img src="{{ url_for('static', filename='images/products/' ~ product.image_filename) }}"
+                   alt="{{ product.name }}"
+                   class="img-fluid rounded-2">
+            </div>
+          {% else %}
+            <div class="border border-secondary rounded-3 bg-black p-4 text-center text-secondary">
+              Brak zdjęcia produktu.
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-8">
       <div class="card bg-dark border-secondary mb-3">
         <div class="card-body">
-          <div class="d-flex flex-wrap justify-content-between align-items-baseline mb-2">
-            <div>
-              <div class="text-muted small mb-1">Cena brutto</div>
-              <div class="h4 mb-0">{{ '%.2f'|format(product.price) }} PLN</div>
-            </div>
-            <div class="text-end">
-              <div class="text-muted small mb-1">Stan magazynowy</div>
-              <div class="h5 mb-0">
-                {% if product.stock is not none %}
-                  {{ product.stock }} <span class="text-muted small">szt.</span>
-                {% else %}
-                  <span class="text-muted">brak danych</span>
-                {% endif %}
-              </div>
+          <h2 class="h6 text-secondary mb-3">Parametry</h2>
+
+          <div class="row mb-2">
+            <div class="col-6 col-md-4 text-secondary small">Cena:</div>
+            <div class="col-6 col-md-8 fw-semibold">
+              {{ '%.2f'|format(product.price or 0) }} PLN
             </div>
           </div>
 
-          <hr class="border-secondary my-3">
-
-          <dl class="row mb-0 small">
-            <dt class="col-sm-4 text-muted">Kategoria</dt>
-            <dd class="col-sm-8">
+          <div class="row mb-2">
+            <div class="col-6 col-md-4 text-secondary small">Kategoria:</div>
+            <div class="col-6 col-md-8">
               {% if product.category %}
                 {{ product.category.name }}
               {% else %}
-                <span class="text-muted">— brak kategorii —</span>
+                <span class="text-secondary">— brak —</span>
               {% endif %}
-            </dd>
+            </div>
+          </div>
 
-            <dt class="col-sm-4 text-muted">ID produktu</dt>
-            <dd class="col-sm-8">#{{ product.id }}</dd>
-
-            {% if product.volume_ml %}
-            <dt class="col-sm-4 text-muted">Pojemność</dt>
-            <dd class="col-sm-8">{{ product.volume_ml }} ml</dd>
-            {% endif %}
-
-            {% if product.abv %}
-            <dt class="col-sm-4 text-muted">Moc</dt>
-            <dd class="col-sm-8">~{{ product.abv }}%</dd>
-            {% endif %}
-
-            {% if product.type %}
-            <dt class="col-sm-4 text-muted">Typ</dt>
-            <dd class="col-sm-8">{{ product.type }}</dd>
-            {% endif %}
-
-            {% if product.region %}
-            <dt class="col-sm-4 text-muted">Region</dt>
-            <dd class="col-sm-8">{{ product.region }}</dd>
-            {% endif %}
-
-            {% if product.is_new is not none %}
-            <dt class="col-sm-4 text-muted">Nowość</dt>
-            <dd class="col-sm-8">
-              {% if product.is_new %}
-                <span class="badge bg-success-soft text-success">Nowy produkt</span>
+          <div class="row mb-2">
+            <div class="col-6 col-md-4 text-secondary small">Stan magazynowy:</div>
+            <div class="col-6 col-md-8">
+              {% if product.stock is not none %}
+                {{ product.stock }}
               {% else %}
-                <span class="text-muted">Nie</span>
+                0
               {% endif %}
-            </dd>
-            {% endif %}
+            </div>
+          </div>
 
-            {% if product.is_bestseller is not none %}
-            <dt class="col-sm-4 text-muted">Bestseller</dt>
-            <dd class="col-sm-8">
-              {% if product.is_bestseller %}
-                <span class="badge bg-warning-soft text-warning">Bestseller</span>
-              {% else %}
-                <span class="text-muted">Nie</span>
-              {% endif %}
-            </dd>
-            {% endif %}
-
-            {% if product.created_at %}
-            <dt class="col-sm-4 text-muted">Utworzono</dt>
-            <dd class="col-sm-8">
-              {{ product.created_at.strftime('%Y-%m-%d %H:%M') }}
-            </dd>
-            {% endif %}
-
-            {% if product.updated_at %}
-            <dt class="col-sm-4 text-muted">Ostatnia edycja</dt>
-            <dd class="col-sm-8">
-              {{ product.updated_at.strftime('%Y-%m-%d %H:%M') }}
-            </dd>
-            {% endif %}
-          </dl>
         </div>
       </div>
 
-      <!-- Komentarze / zgłoszenia – podsumowanie -->
       <div class="card bg-dark border-secondary">
         <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-1">
-            <h2 class="h6 mb-0">Aktywność użytkowników</h2>
-          </div>
-          <p class="text-muted small mb-2">
-            Poniżej szybki podgląd komentarzy związanych z tym produktem.
-            Pełna moderacja jest dostępna w zakładce „Komentarze” panelu admina.
-          </p>
-
-          {% if comments is defined and comments %}
-          <ul class="list-unstyled mb-0 small">
-            {% for c in comments[:5] %}
-            <li class="mb-1">
-              <span class="text-muted">
-                {{ c.user.email if c.user and c.user.email else 'Użytkownik' }}
-                {% if c.created_at %} • {{ c.created_at.strftime('%Y-%m-%d %H:%M') }}{% endif %}
-              </span><br>
-              {{ c.content }}
-            </li>
-            {% endfor %}
-          </ul>
+          <h2 class="h6 text-secondary mb-3">Opis</h2>
+          {% set desc =
+            product.description
+            or product.description_html
+            or product.body
+            or product.content
+          %}
+          {% if desc %}
+            <div class="small" style="white-space: pre-wrap;">
+              {{ desc }}
+            </div>
           {% else %}
-          <p class="text-muted small mb-0">Brak komentarzy powiązanych z tym produktem.</p>
+            <p class="text-secondary mb-0">Brak opisu produktu.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="row g-4 mt-3">
+    <div class="col-12">
+      <div class="card bg-dark border-secondary">
+        <div class="card-body">
+          <h2 class="h6 text-secondary mb-3">Ostatnie komentarze do produktu</h2>
+
+          {% if comments and comments|length %}
+            <div class="list-group list-group-flush">
+              {% for c in comments %}
+                <div class="list-group-item bg-transparent text-light border-secondary">
+                  <div class="d-flex justify-content-between">
+                    <div class="small">
+                      <strong>
+                        {% if c.user %}
+                          {{ c.user.email }}
+                        {% else %}
+                          Użytkownik
+                        {% endif %}
+                      </strong>
+                      {% if c.created_at %}
+                        <span class="text-secondary">
+                          • {{ c.created_at.strftime('%Y-%m-%d %H:%M') }}
+                        </span>
+                      {% endif %}
+                    </div>
+                  </div>
+                  <div class="small mt-1">
+                    {{ c.content }}
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="text-secondary mb-0">Brak komentarzy dla tego produktu (albo nie było jeszcze zakupów / opinii).</p>
           {% endif %}
         </div>
       </div>
     </div>
   </div>
 
-  <!-- OPIS produktu -->
-  <div class="row g-4 mt-3">
-    <div class="col-12">
-      <div class="card bg-dark border-secondary">
-        <div class="card-body">
-          <h2 class="h6 mb-2">Opis produktu</h2>
-          <div class="small">
-            {% if product.description_html %}
-              {{ product.description_html|safe }}
-            {% elif product.description %}
-              {{ product.description }}
-            {% else %}
-              <span class="text-muted">
-                Brak opisu. Uzupełnij treść w edycji produktu.
-              </span>
-            {% endif %}
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
 </div>
+
 {% endblock %}

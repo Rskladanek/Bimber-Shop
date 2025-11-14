@@ -1,151 +1,230 @@
 {% extends "base.html" %}
-{% block title %}Bimberek Białostocki{% endblock %}
+{% block title %}Sklep{% endblock %}
+
+{% block head %}
+<style>
+  /* kontrast + layout specyficzny dla strony sklepu */
+  .section-card{background:rgba(17,24,39,.75);border:1px solid rgba(148,163,184,.25);border-radius:16px}
+  .section-pad{padding:14px}
+  .sidebar{position:sticky;top:82px}
+  .muted{color:#9ca3af}
+
+  /* slider */
+  .slider-wrap{position:relative}
+  .slider-track{display:flex;overflow:hidden;scroll-behavior:smooth;border-radius:16px}
+  .slide{min-width:100%;padding:10px}
+  @media (min-width:768px){ .slide{min-width:50%} }
+  @media (min-width:1200px){ .slide{min-width:33.3333%} }
+  .slide-card{height:100%;display:flex;flex-direction:column;overflow:hidden}
+  .slide-img{aspect-ratio:16/9;object-fit:cover;width:100%}
+  .slide-body{padding:12px}
+  .slider-nav{position:absolute;right:10px;bottom:12px;display:flex;gap:8px}
+  .slider-btn{width:34px;height:34px;border-radius:50%;border:1px solid rgba(148,163,184,.4);background:rgba(2,6,23,.6)}
+
+  /* kategorie (prawa kolumna) */
+  .cat-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+  .cat-link{display:flex;justify-content:space-between;align-items:center;
+    text-decoration:none;padding:8px 10px;border-radius:999px;border:1px solid rgba(148,163,184,.35);
+    background:rgba(17,24,39,.6);color:#e5e7eb;font-size:0.9rem}
+  .cat-link.active{border-color:rgba(168,85,247,.8);box-shadow:0 0 0 2px rgba(168,85,247,.25) inset}
+
+  /* grid produktów */
+  .grid{display:grid;gap:14px}
+  @media (min-width:576px){ .grid{grid-template-columns:repeat(2,1fr)} }
+  @media (min-width:992px){ .grid{grid-template-columns:repeat(3,1fr)} }
+  @media (min-width:1400px){ .grid{grid-template-columns:repeat(4,1fr)} }
+  .prod-card{display:flex;flex-direction:column;overflow:hidden}
+  .prod-img{aspect-ratio:1/1;object-fit:cover;width:100%}
+  .prod-body{padding:12px;display:flex;flex-direction:column;gap:6px}
+  .price{font-weight:700}
+  .stock-ok{color:#10b981}.stock-low{color:#f59e0b}.stock-zero{color:#ef4444}
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="shop-home">
-  <div class="container-narrow-lg">
+<div class="container my-3">
 
-    <!-- HERO -->
-    <section class="shop-hero">
-      <div class="shop-hero-inner">
-        <div>
-          {% if current_user.is_authenticated and current_user.role in ['admin', 'moderator'] %}
-          {% include "admin/_toolbar.html" %}
-          {% endif %}
-
-          <div class="shop-hero-kicker">Bimberek Białostocki</div>
-          <h1 class="shop-hero-title">
-            lokalne klimaty, konkretne %
-          </h1>
-          <p class="shop-hero-subtitle">
-            Małe partie, dopracowany smak, zero korpo-szajsu. Wybierz nalewkę,
-            zestaw prezentowy albo coś do kolekcji.
-          </p>
-
-          <div class="shop-hero-actions">
-            <a href="#bestsellery" class="btn btn-primary">
-              Zobacz bestsellery
-            </a>
-            <a href="#nowosci" class="btn btn-outline-light">
-              Nowości
-            </a>
-          </div>
+  <div class="row g-3">
+    <!-- LEWA: SLIDER -->
+    <div class="col-lg-9">
+      {% set slides = (active_slider.items if active_slider and active_slider.items else []) %}
+      {% if slides %}
+      <div class="slider-wrap section-card">
+        <div class="section-pad muted">Polecane</div>
+        <div id="sliderTrack" class="slider-track">
+          {% for it in slides %}
+            {% set p = it.product %}
+            <div class="slide">
+              <div class="slide-card section-card">
+                {% if p and p.image_filename %}
+                  <img class="slide-img" src="{{ url_for('static', filename='images/products/' ~ p.image_filename) }}" alt="{{ p.name }}">
+                {% else %}
+                  <img class="slide-img" src="{{ url_for('static', filename='images/placeholder_wide.jpg') }}" alt="">
+                {% endif %}
+                <div class="slide-body">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div class="fw-semibold">{{ p.name if p else 'Produkt' }}</div>
+                    {% if p %}<div class="price">{{ '%.2f'|format(p.price) }} PLN</div>{% endif %}
+                  </div>
+                  {% if p and p.description_html %}
+                    <div class="muted small">{{ p.description_html|striptags|truncate(120) }}</div>
+                  {% endif %}
+                  {% if p %}
+                  <div class="mt-2 d-flex gap-2">
+                    <a class="btn btn-primary btn-sm" href="{{ url_for('shop.product_detail', product_id=p.id) }}">Zobacz</a>
+                    <form method="post" action="{{ url_for('shop.add_to_cart', product_id=p.id) }}">
+                      {{ csrf_token() if csrf_token is defined else '' }}
+                      <input type="hidden" name="quantity" value="1">
+                      <button class="btn btn-outline-light btn-sm" {% if p.stock is not none and p.stock<=0 %}disabled{% endif %}>Do koszyka</button>
+                    </form>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% endfor %}
         </div>
+        <div class="slider-nav">
+          <button class="slider-btn" id="prevSlide" aria-label="Prev"><i class="bi bi-chevron-left"></i></button>
+          <button class="slider-btn" id="nextSlide" aria-label="Next"><i class="bi bi-chevron-right"></i></button>
+        </div>
+      </div>
+      {% else %}
+        <div class="section-card section-pad muted">Brak aktywnego slidera – dodaj w panelu admina.</div>
+      {% endif %}
+    </div>
 
-        <div class="shop-hero-right">
-          <h2>Dlaczego właśnie tu?</h2>
-          <ul>
-            <li>✔ Stripe – normalne płatności jak w dużym e-commerce.</li>
-            <li>🚚 Wysyłka z Polski, nie z piwnicy w Azji.</li>
-            <li>🧪 Sklep postawiony na Flasku, a nie na gotowym szablonie.</li>
+    <!-- PRAWA: KATEGORIE + SZUKAJKA -->
+    <div class="col-lg-3">
+      <div class="sidebar">
+        <div class="section-card section-pad">
+          <form method="get" action="{{ url_for('shop.index') }}" class="mb-2">
+            {% if current_category_id %}<input type="hidden" name="cat" value="{{ current_category_id }}">{% endif %}
+            <div class="input-group input-group-sm">
+              <input type="search" name="q" value="{{ q or '' }}" class="form-control" placeholder="Szukaj produktu...">
+              <button class="btn btn-primary"><i class="bi bi-search"></i></button>
+            </div>
+          </form>
+          <div class="muted small mb-2">Kategorie</div>
+          <ul class="cat-list">
+            <li>
+              <a class="cat-link {% if not current_category_id %}active{% endif %}" href="{{ url_for('shop.index') }}">
+                <span>Wszystkie</span>
+              </a>
+            </li>
+            {% for c in categories %}
+            <li>
+              <a class="cat-link {% if current_category_id==c.id %}active{% endif %}"
+                 href="{{ url_for('shop.index', cat=c.id, q=q) }}">
+                <span>{{ c.name }}</span>
+              </a>
+            </li>
+            {% endfor %}
           </ul>
         </div>
       </div>
-    </section>
+    </div>
+  </div>
 
-    <!-- KATEGORIE -->
-    {% if categories %}
-    <section class="shop-category-strip">
-      <div class="shop-category-label">Kategorie</div>
-      <div class="shop-category-pills">
-        {% for cat in categories %}
-        <a href="{{ url_for('shop.category_view', category_id=cat.id) }}"
-           class="shop-category-pill">
-          {{ cat.name }}
-        </a>
+  <!-- GRID PRODUKTÓW -->
+  <div class="section-card section-pad mt-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <div class="fw-semibold">
+        {% if current_category_id %}
+          {{ categories|selectattr('id','equalto',current_category_id)|map(attribute='name')|list|first or 'Kategoria' }}
+        {% else %}
+          Wszystkie produkty
+        {% endif %}
+        {% if q %}<span class="muted">– szukaj: „{{ q }}”</span>{% endif %}
+      </div>
+      {% if q or current_category_id %}
+        <a class="btn btn-outline-light btn-sm" href="{{ url_for('shop.index') }}">Wyczyść filtr</a>
+      {% endif %}
+    </div>
+
+    {% if products and products.items|length %}
+      <div class="grid">
+        {% for p in products.items %}
+          <div class="prod-card section-card">
+            {% if p.image_filename %}
+              <img class="prod-img" src="{{ url_for('static', filename='images/products/' ~ p.image_filename) }}" alt="{{ p.name }}">
+            {% else %}
+              <img class="prod-img" src="{{ url_for('static', filename='images/placeholder_square.jpg') }}" alt="">
+            {% endif %}
+            <div class="prod-body">
+              <div class="fw-semibold">{{ p.name }}</div>
+              <div class="d-flex justify-content-between">
+                <div class="price">{{ '%.2f'|format(p.price) }} PLN</div>
+                {% if p.stock is not none %}
+                  {% if p.stock<=0 %}
+                    <span class="stock-zero small">Brak</span>
+                  {% elif p.stock<5 %}
+                    <span class="stock-low small">Mało ({{ p.stock }})</span>
+                  {% else %}
+                    <span class="stock-ok small">{{ p.stock }} szt.</span>
+                  {% endif %}
+                {% endif %}
+              </div>
+              <div class="d-flex gap-2 mt-1">
+                <a class="btn btn-outline-light btn-sm" href="{{ url_for('shop.product_detail', product_id=p.id) }}">Szczegóły</a>
+                <form method="post" action="{{ url_for('shop.add_to_cart', product_id=p.id) }}">
+                  {{ csrf_token() if csrf_token is defined else '' }}
+                  <input type="hidden" name="quantity" value="1">
+                  <button class="btn btn-primary btn-sm" {% if p.stock is not none and p.stock<=0 %}disabled{% endif %}>
+                    <i class="bi bi-bag-plus"></i>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
         {% endfor %}
       </div>
-    </section>
+
+      {% if products.pages>1 %}
+      <nav class="mt-3">
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item {% if not products.has_prev %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('shop.index', cat=current_category_id, q=q, page=products.prev_num) }}">«</a>
+          </li>
+          {% for p in range(1, products.pages+1) %}
+          <li class="page-item {% if p==products.page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('shop.index', cat=current_category_id, q=q, page=p) }}">{{ p }}</a>
+          </li>
+          {% endfor %}
+          <li class="page-item {% if not products.has_next %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('shop.index', cat=current_category_id, q=q, page=products.next_num) }}">»</a>
+          </li>
+        </ul>
+      </nav>
+      {% endif %}
+
+    {% else %}
+      <div class="alert alert-secondary mb-0">
+        Nic nie znaleziono. Zmień kategorię lub wyszukaj inaczej.
+      </div>
     {% endif %}
-
-    <!-- BESTSELLERY -->
-    <section id="bestsellery" class="shop-section">
-      <div class="shop-section-header">
-        <div class="shop-section-title">🔥 Bestsellery</div>
-        <a href="#nowosci" class="shop-section-link">Przejdź do nowości ↓</a>
-      </div>
-
-      {% if best_sellers %}
-        <div class="product-grid">
-          {% for p in best_sellers %}
-          <article class="product-card">
-            <div class="product-card-media">
-              {% if p.image_filename %}
-              <img src="{{ url_for('static', filename='images/products/' ~ p.image_filename) }}"
-                   alt="{{ p.name }}">
-              {% endif %}
-              <div class="product-card-badge">
-                <span class="badge-pill badge-soft-orange">Bestseller</span>
-              </div>
-            </div>
-            <div class="product-card-body">
-              <h3 class="product-card-title text-truncate-2">{{ p.name }}</h3>
-              <div class="product-card-meta">
-                <span class="product-card-price">{{ "%.2f"|format(p.price) }} PLN</span>
-                {% if p.category %}
-                  <span class="small text-muted-soft">{{ p.category.name }}</span>
-                {% endif %}
-              </div>
-            </div>
-            <div class="product-card-footer">
-              <a href="{{ url_for('shop.product_detail', product_id=p.id) }}"
-                 class="btn btn-outline-primary btn-sm">
-                Zobacz
-              </a>
-            </div>
-          </article>
-          {% endfor %}
-        </div>
-      {% else %}
-        <p class="text-muted-soft small mb-0">
-          Brak bestsellerów (oznacz kilka produktów jako takie w panelu).
-        </p>
-      {% endif %}
-    </section>
-
-    <!-- NOWOŚCI -->
-    <section id="nowosci" class="shop-section">
-      <div class="shop-section-header">
-        <div class="shop-section-title">🆕 Nowości</div>
-        <a href="#top" class="shop-section-link">Wróć na górę ↑</a>
-      </div>
-
-      {% if new_products %}
-        <div class="product-grid">
-          {% for p in new_products %}
-          <article class="product-card">
-            <div class="product-card-media">
-              {% if p.image_filename %}
-              <img src="{{ url_for('static', filename='images/products/' ~ p.image_filename) }}"
-                   alt="{{ p.name }}">
-              {% endif %}
-              <div class="product-card-badge">
-                <span class="badge-pill badge-soft-green">Nowość</span>
-              </div>
-            </div>
-            <div class="product-card-body">
-              <h3 class="product-card-title text-truncate-2">{{ p.name }}</h3>
-              <div class="product-card-meta">
-                <span class="product-card-price">{{ "%.2f"|format(p.price) }} PLN</span>
-                {% if p.category %}
-                  <span class="small text-muted-soft">{{ p.category.name }}</span>
-                {% endif %}
-              </div>
-            </div>
-            <div class="product-card-footer">
-              <a href="{{ url_for('shop.product_detail', product_id=p.id) }}"
-                 class="btn btn-outline-primary btn-sm">
-                Zobacz
-              </a>
-            </div>
-          </article>
-          {% endfor %}
-        </div>
-      {% else %}
-        <p class="text-muted-soft small mb-0">Brak nowości.</p>
-      {% endif %}
-    </section>
-
   </div>
 </div>
+
+<script>
+  (function(){
+    const track = document.getElementById('sliderTrack');
+    if (!track) return;
+
+    const step = () => {
+      const s = track.querySelector('.slide');
+      return s ? s.getBoundingClientRect().width : 0;
+    };
+
+    const next = () => track.scrollBy({ left: step(), behavior: 'smooth' });
+    const prev = () => track.scrollBy({ left: -step(), behavior: 'smooth' });
+
+    document.getElementById('nextSlide')?.addEventListener('click', next);
+    document.getElementById('prevSlide')?.addEventListener('click', prev);
+
+    let t = setInterval(next, 4000);
+    track.addEventListener('mouseenter', () => clearInterval(t));
+    track.addEventListener('mouseleave', () => t = setInterval(next, 4000));
+  })();
+</script>
 {% endblock %}

@@ -6,13 +6,13 @@ from sqlalchemy.exc import OperationalError
 
 from . import blog_bp
 from app.extensions import db
-from app.models import Post
-from .forms import PostForm
+from app.models import Post, Comment
+from .forms import PostForm, BlogCommentForm
 
 
 def is_admin(user) -> bool:
     """Prosty check: rola 'admin' lub flaga is_admin == True."""
-    if not user.is_authenticated:
+    if not user or not getattr(user, "is_authenticated", False):
         return False
     role = getattr(user, "role", None)
     if role == "admin":
@@ -22,45 +22,185 @@ def is_admin(user) -> bool:
     return False
 
 
+# =====================================================
+#   LISTA POSTÓW / BLOG
+# =====================================================
+
 @blog_bp.route("/")
 def post_list():
+    """
+    Lista publicznych wpisów:
+    - tylko status = 'zaakceptowany'
+    - paginacja
+    - prosty search po tytule / treści (q)
+    """
+    page = request.args.get("page", 1, type=int)
+    q = (request.args.get("q") or "").strip()
+
     try:
-        posts = Post.query.order_by(Post.created_at.desc()).all()
+        query = Post.query.filter_by(status="zaakceptowany")
+
+        if q:
+            like = f"%{q}%"
+            query = query.filter(
+                db.or_(
+                    Post.title.ilike(like),
+                    Post.content_html.ilike(like),
+                )
+            )
+
+        query = query.order_by(Post.created_at.desc())
+        posts = query.paginate(page=page, per_page=6, error_out=False)
     except OperationalError:
-        posts = []
+        posts = None
 
-    return render_template("blog/post_list.html", posts=posts)
+    # Sidebar – ostatnie wpisy
+    try:
+        recent_posts = (
+            Post.query.filter_by(status="zaakceptowany")
+            .order_by(Post.created_at.desc())
+            .limit(5)
+            .all()
+        )
+    except OperationalError:
+        recent_posts = []
+
+    # Na razie nie masz kategorii dla bloga – dajemy puste
+    categories = []
+    current_category_id = None
+
+    return render_template(
+        "blog/post_list.html",
+        posts=posts,
+        categories=categories,
+        current_category_id=current_category_id,
+        recent_posts=recent_posts,
+        q=q,
+    )
 
 
-@blog_bp.route("/post/<int:post_id>")
-def post_detail(post_id):
+# =====================================================
+#   SZCZEGÓŁY POSTA + KOMENTARZE
+# =====================================================
+
+@blog_bp.route("/post/<int:post_id>/", methods=["GET", "POST"])
+def post_detail(post_id: int):
+    """Szczegóły wpisu + komentarze + nawigacja poprzedni/następny."""
     try:
         post = Post.query.get_or_404(post_id)
     except OperationalError:
         return render_template("blog/post_detail.html", post=None), 404
 
-    return render_template("blog/post_detail.html", post=post)
+    # Niezaakceptowany – widzi tylko autor lub admin
+    if post.status != "zaakceptowany":
+        if not current_user.is_authenticated:
+            abort(404)
+        if not (is_admin(current_user) or current_user.id == post.author_id):
+            abort(404)
 
+    # zaakceptowane komentarze
+    try:
+        comments = (
+            Comment.query.filter_by(post_id=post.id, status="zaakceptowany")
+            .order_by(Comment.created_at.desc())
+            .all()
+        )
+    except OperationalError:
+        comments = []
+
+    form = BlogCommentForm()
+    if form.validate_on_submit():
+        if not current_user.is_authenticated:
+            flash("Musisz być zalogowany, żeby dodać komentarz.", "warning")
+            return redirect(url_for("auth.login", next=request.url))
+
+        try:
+            comment = Comment(
+                content=form.content.data,
+                post_id=post.id,
+                user_id=current_user.id,
+            )
+            db.session.add(comment)
+            db.session.commit()
+            flash("Komentarz dodany – pojawi się po akceptacji.", "success")
+        except OperationalError:
+            db.session.rollback()
+            flash("Nie udało się dodać komentarza.", "danger")
+
+        return redirect(url_for("blog.post_detail", post_id=post.id))
+
+    # poprzedni / następny wpis (po ID)
+    try:
+        prev_post = (
+            Post.query.filter(
+                Post.status == "zaakceptowany",
+                Post.id < post.id,
+            )
+            .order_by(Post.id.desc())
+            .first()
+        )
+        next_post = (
+            Post.query.filter(
+                Post.status == "zaakceptowany",
+                Post.id > post.id,
+            )
+            .order_by(Post.id.asc())
+            .first()
+        )
+    except OperationalError:
+        prev_post = None
+        next_post = None
+
+    return render_template(
+        "blog/post_detail.html",
+        post=post,
+        comments=comments,
+        form=form,
+        prev_post=prev_post,
+        next_post=next_post,
+    )
+
+
+# =====================================================
+#   NOWY POST
+# =====================================================
 
 @blog_bp.route("/new", methods=["GET", "POST"])
 @login_required
 def new_post():
-    # TYLKO ADMIN
-    if not is_admin(current_user):
-        abort(403)
-
+    """
+    Nowy wpis:
+    - admin: od razu status 'zaakceptowany'
+    - zwykły user: 'oczekuje' -> idzie do moderacji w panelu admina
+    """
     form = PostForm()
+
     if form.validate_on_submit():
-        # Zakładam, że w PostForm masz pola: title, content
-        # i w modelu: title, content_html, author_id
-        post = Post(
-            title=form.title.data,
-            content_html=form.content.data,
-            author_id=current_user.id,
-        )
-        db.session.add(post)
-        db.session.commit()
-        flash("Nowy wpis na blogu został dodany.", "success")
-        return redirect(url_for("blog.post_detail", post_id=post.id))
+        is_admin_flag = is_admin(current_user)
+        status = "zaakceptowany" if is_admin_flag else "oczekuje"
+
+        try:
+            post = Post(
+                title=form.title.data.strip(),
+                content_html=form.content.data,
+                author_id=current_user.id,
+                status=status,
+            )
+            db.session.add(post)
+            db.session.commit()
+        except OperationalError:
+            db.session.rollback()
+            flash("Nie udało się zapisać wpisu.", "danger")
+            return render_template("blog/new_post.html", form=form)
+
+        if is_admin_flag:
+            flash("Nowy wpis został opublikowany.", "success")
+            return redirect(url_for("blog.post_detail", post_id=post.id))
+        else:
+            flash(
+                "Twój wpis został zapisany i czeka na akceptację administratora.",
+                "success",
+            )
+            return redirect(url_for("blog.post_list"))
 
     return render_template("blog/new_post.html", form=form)

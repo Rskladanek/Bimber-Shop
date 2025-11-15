@@ -52,3 +52,7 @@ class Config:
         os.environ.get("GOOGLE_CLIENT_SECRET")
         or os.environ.get("OAUTH_GOOGLE_CLIENT_SECRET", "")
     )
+
+    # [ZMIANA] Dodane klucze dla Facebook OAuth
+    FACEBOOK_CLIENT_ID = os.environ.get("FACEBOOK_CLIENT_ID", "")
+    FACEBOOK_CLIENT_SECRET = os.environ.get("FACEBOOK_CLIENT_SECRET", "")

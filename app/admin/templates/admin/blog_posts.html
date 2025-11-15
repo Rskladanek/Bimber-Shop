@@ -2,58 +2,108 @@
 {% block title %}Moderacja wpisów na blogu{% endblock %}
 
 {% block content %}
-<h2>Moderacja wpisów na blogu</h2>
+<!-- [ZMIANA] Dodanie paska narzędzi admina dla spójności -->
+{% include "admin/_toolbar.html" %}
 
-<table class="table table-striped">
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Tytuł</th>
-      <th>Autor</th>
-      <th>Status</th>
-      <th>Data</th>
-      <th>Akcje</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for p in posts %}
-    <tr>
-      <td>{{ p.id }}</td>
-      <td>{{ p.title }}</td>
-      <td>
-        {% if p.author %}
-          {{ p.author.name or p.author.email }}
-        {% else %}
-          —
-        {% endif %}
-      </td>
-      <td>{{ p.status }}</td>
-      <td>
-        {% if p.created_at %}
-          {{ p.created_at.strftime("%Y-%m-%d %H:%M") }}
-        {% endif %}
-      </td>
-      <td>
-        <a href="{{ url_for('blog.post_detail', post_id=p.id) }}"
-           class="btn btn-sm btn-outline-secondary"
-           target="_blank">
-          Podgląd
-        </a>
-        <a href="{{ url_for('admin.approve_post', post_id=p.id) }}"
-           class="btn btn-sm btn-success">
-          Akceptuj
-        </a>
-        <a href="{{ url_for('admin.reject_post', post_id=p.id) }}"
-           class="btn btn-sm btn-danger">
-          Odrzuć
-        </a>
-      </td>
-    </tr>
-    {% else %}
-    <tr>
-      <td colspan="6">Brak wpisów do moderacji.</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<div class="container my-4">
+
+  <!-- [ZMIANA] Dodanie standardowego nagłówka strony admina -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h1 class="h3 mb-1">Moderacja wpisów na blogu</h1>
+      <p class="muted mb-0">
+        Akceptuj lub odrzucaj wpisy dodane przez użytkowników.
+      </p>
+    </div>
+  </div>
+
+  <!-- [ZMIANA] Objęcie tabeli w .card, aby style .admin-page .card .table zadziałały -->
+  <div class="card">
+    <div class="card-body p-0">
+      <!-- [ZMIANA] Dodanie .table-hover i .align-middle dla spójności -->
+      <table class="table table-striped table-hover mb-0 align-middle">
+        <thead>
+          <tr>
+            <th style="width: 50px;">ID</th>
+            <th>Tytuł</th>
+            <th>Autor</th>
+            <th>Status</th>
+            <th style="width: 150px;">Data</th>
+            <th style="width: 260px;" class="text-end">Akcje</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in posts %}
+          <tr>
+            <td class="muted">{{ p.id }}</td>
+            <td>
+              <!-- [ZMIANA] Poprawka linku dla ciemnego tła -->
+              <a href="{{ url_for('blog.post_detail', post_id=p.id) }}"
+                 class="text-light text-decoration-none"
+                 target="_blank">
+                {{ p.title }}
+              </a>
+            </td>
+            <td class="muted">
+              {% if p.author %}
+                {{ p.author.username or p.author.email }}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+            <td>
+              <!-- [ZMIANA] Lepsze badge dla statusu -->
+              {% if p.status == 'zaakceptowany' %}
+                <span class="badge text-bg-success">Zaakceptowany</span>
+              {% elif p.status == 'oczekuje' %}
+                <span class="badge text-bg-warning">Oczekuje</span>
+              {% elif p.status == 'odrzucony' %}
+                <span class="badge text-bg-danger">Odrzucony</span>
+              {% else %}
+                <span class="badge text-bg-secondary">{{ p.status }}</span>
+              {% endif %}
+            </td>
+            <td class="muted small">
+              {% if p.created_at %}
+                {{ p.created_at.strftime("%Y-%m-%d %H:%M") }}
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <a href="{{ url_for('blog.post_detail', post_id=p.id) }}"
+                 class="btn btn-sm btn-outline-secondary"
+                 target="_blank">
+                Podgląd
+              </a>
+              
+              <!-- [ZMIANA] Użycie POST dla akcji zmieniających stan (bezpieczeństwo) -->
+              {% if p.status != 'zaakceptowany' %}
+              <form action="{{ url_for('admin.approve_post', post_id=p.id) }}" method="POST" class="d-inline">
+                {{ csrf_token() if csrf_token is defined else '' }}
+                <button type="submit" class="btn btn-sm btn-outline-success">
+                  Akceptuj
+                </button>
+              </form>
+              {% endif %}
+              
+              {% if p.status != 'odrzucony' %}
+              <form action="{{ url_for('admin.reject_post', post_id=p.id) }}" method="POST" class="d-inline">
+                 {{ csrf_token() if csrf_token is defined else '' }}
+                <button type="submit" class="btn btn-sm btn-outline-danger">
+                  Odrzuć
+                </button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" class="text-center py-4 muted">Brak wpisów do moderacji.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
 {% endblock %}

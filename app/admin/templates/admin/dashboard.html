@@ -12,8 +12,9 @@
   <div class="row g-3 mb-4">
     <!-- Produkty -->
     <div class="col-md-3">
-      <div class="card h-100 text-center">
-        <div class="card-body">
+      <!-- [ZMIANA] Usunięto .text-center, styl pochodzi z .admin-page .card -->
+      <div class="card h-100">
+        <div class="card-body text-center"> <!-- .text-center przeniesione tutaj -->
           <h5 class="card-title mb-1">Produkty</h5>
           <p class="display-6 mb-1">{{ products_count }}</p>
           <p class="text-muted small mb-3">
@@ -28,8 +29,8 @@
 
     <!-- Kategorie -->
     <div class="col-md-3">
-      <div class="card h-100 text-center">
-        <div class="card-body">
+      <div class="card h-100">
+        <div class="card-body text-center">
           <h5 class="card-title mb-1">Kategorie</h5>
           <p class="display-6 mb-1">{{ categories_count }}</p>
           <p class="text-muted small mb-3">
@@ -44,8 +45,8 @@
 
     <!-- Komentarze -->
     <div class="col-md-3">
-      <div class="card h-100 text-center">
-        <div class="card-body">
+      <div class="card h-100">
+        <div class="card-body text-center">
           <h5 class="card-title mb-1">Komentarze</h5>
           <p class="display-6 mb-1">{{ comments_count }}</p>
           <p class="text-muted small mb-3">
@@ -60,8 +61,8 @@
 
     <!-- Slidery -->
     <div class="col-md-3">
-      <div class="card h-100 text-center">
-        <div class="card-body">
+      <div class="card h-100">
+        <div class="card-body text-center">
           <h5 class="card-title mb-1">Slidery</h5>
           <p class="display-6 mb-1">{{ sliders_count }}</p>
           <p class="text-muted small mb-3">
@@ -83,8 +84,8 @@
   <div class="row g-3 mb-4">
     <!-- Blog -->
     <div class="col-md-4">
-      <div class="card h-100 text-center">
-        <div class="card-body">
+      <div class="card h-100">
+        <div class="card-body text-center">
           <h5 class="card-title mb-1">Blog</h5>
           <p class="display-6 mb-1">{{ posts_total or 0 }}</p>
           <p class="text-muted small mb-3">
@@ -99,8 +100,8 @@
 
     <!-- Zgłoszenia / raporty -->
     <div class="col-md-4">
-      <div class="card h-100 text-center">
-        <div class="card-body">
+      <div class="card h-100">
+        <div class="card-body text-center">
           <h5 class="card-title mb-1">Zgłoszenia</h5>
           <p class="display-6 mb-1">{{ reports_open or 0 }}</p>
           <p class="text-muted small mb-3">
@@ -116,8 +117,8 @@
 
     <!-- Slot na przyszłość (np. użytkownicy / motywy) -->
     <div class="col-md-4">
-      <div class="card h-100 text-center">
-        <div class="card-body">
+      <div class="card h-100">
+        <div class="card-body text-center">
           <h5 class="card-title mb-1">Konfiguracja</h5>
           <p class="display-6 mb-1"><i class="bi bi-gear"></i></p>
           <p class="text-muted small mb-3">
@@ -140,7 +141,8 @@
           Ostatnio dodane produkty
         </div>
         <div class="card-body p-0">
-          <table class="table mb-0 table-striped">
+          <!-- [ZMIANA] Style dla tabeli są teraz w style.css -->
+          <table class="table mb-0 table-striped table-hover">
             <thead>
               <tr>
                 <th>ID</th>
@@ -187,7 +189,7 @@
           Najnowsze komentarze
         </div>
         <div class="card-body p-0">
-          <table class="table mb-0 table-striped">
+          <table class="table mb-0 table-striped table-hover">
             <thead>
               <tr>
                 <th>ID</th>
@@ -243,7 +245,7 @@
       Niski stan magazynowy
     </div>
     <div class="card-body p-0">
-      <table class="table mb-0 table-striped">
+      <table class="table mb-0 table-striped table-hover">
         <thead>
           <tr>
             <th>ID</th>

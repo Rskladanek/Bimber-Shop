@@ -1,26 +1,107 @@
 {% extends "base.html" %}
 {% block title %}Koszyk - Bimberek{% endblock %}
+
 {% block content %}
-<h2>Koszyk</h2>
-{% if cart_items %}
-<table class="table">
-  <thead>
-    <tr><th>Produkt</th><th>Ilość</th><th>Cena</th><th>Suma</th></tr>
-  </thead>
-  <tbody>
-  {% for prod, qty, item_total in cart_items %}
-    <tr>
-      <td>{{ prod.name }}</td>
-      <td>{{ qty }}</td>
-      <td>{{ prod.price }} PLN</td>
-      <td>{{ item_total }} PLN</td>
-    </tr>
-  {% endfor %}
-  </tbody>
-</table>
-<p class="text-end"><strong>Razem: {{ total }} PLN</strong></p>
-<a href="{{ url_for('shop.checkout') }}" class="btn btn-primary">Przejdź do zamówienia</a>
-{% else %}
-<p>Koszyk jest pusty.</p>
-{% endif %}
+<div class="container my-3">
+  <h1 class="h3 mb-4">Koszyk</h1>
+
+  {% if cart_items %}
+  <div class="row g-4">
+    <!-- LEWA: Lista produktów -->
+    <div class="col-lg-8">
+      <div class="section-card">
+        <!-- Używamy table-borderless dla czystego wyglądu w karcie -->
+        <div class="table-responsive">
+          <table class="table table-borderless align-middle mb-0">
+            <thead class="border-bottom" style="border-color: rgba(148,163,184,.25) !important;">
+              <tr>
+                <th class="p-3" scope="col">Produkt</th>
+                <th class="p-3" scope="col">Ilość</th>
+                <th class="p-3" scope="col">Cena</th>
+                <th class="p-3" scope="col">Suma</th>
+                <th class="p-3" scope="col"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for prod, qty, item_total in cart_items %}
+              <tr class="border-bottom" style="border-color: rgba(148,163,184,.25) !important;">
+                <td class="p-3">
+                  <div class="d-flex align-items-center">
+                    {% if prod.image_filename %}
+                    <img src="{{ url_for('static', filename='images/products/' ~ prod.image_filename) }}" alt="{{ prod.name }}"
+                         style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;" class="me-3">
+                    {% else %}
+                    <img src="https://placehold.co/60x60/020617/374151?text=?" alt="Brak obrazka"
+                         style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;" class="me-3">
+                    {% endif %}
+                    <div>
+                      <a href="{{ url_for('shop.product_detail', product_id=prod.id) }}" class="fw-semibold">{{ prod.name }}</a>
+                      <div class="small muted">
+                        {% if prod.stock is not none and prod.stock <= 0 %}
+                        <span class="stock-zero">Brak w magazynie</span>
+                        {% elif prod.stock is not none and prod.stock < 5 %}
+                        <span class="stock-low">Ostatnie sztuki</span>
+                        {% else %}
+                        <span class="stock-ok">Dostępny</span>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td class="p-3">{{ qty }}</td>
+                <td class="p-3">{{ '%.2f'|format(prod.price) }} PLN</td>
+                <td class="p-3 fw-semibold">{{ '%.2f'|format(item_total) }} PLN</td>
+                <td class="p-3 text-end">
+                  <form action="{{ url_for('shop.remove_from_cart', product_id=prod.id) }}" method="POST">
+                    {{ csrf_token() if csrf_token is defined else '' }}
+                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Usuń">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <a href="{{ url_for('shop.index') }}" class="btn btn-outline-light mt-3">
+        <i class="bi bi-chevron-left me-1"></i> Kontynuuj zakupy
+      </a>
+    </div>
+
+    <!-- PRAWA: Podsumowanie -->
+    <div class="col-lg-4">
+      <div class="section-card section-pad position-sticky" style="top: 82px;">
+        <h2 class="h5 mb-3">Podsumowanie</h2>
+        <div class="d-flex justify-content-between muted">
+          <span>Wartość produktów</span>
+          <span>{{ '%.2f'|format(total) }} PLN</span>
+        </div>
+        <div class="d-flex justify-content-between muted">
+          <span>Wysyłka</span>
+          <span>GRATIS</span>
+        </div>
+        <hr style="border-color: rgba(148,163,184,.25);">
+        <div class="d-flex justify-content-between fw-semibold fs-5 mb-3">
+          <span>Razem</span>
+          <span>{{ '%.2f'|format(total) }} PLN</span>
+        </div>
+        <div class="d-grid">
+          <a href="{{ url_for('shop.checkout') }}" class="btn btn-primary btn-lg">
+            Przejdź do zamówienia <i class="bi bi-chevron-right ms-1"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% else %}
+  <div class="section-card section-pad text-center">
+    <h2 class="h5">Twój koszyk jest pusty.</h2>
+    <p class="muted">Dodaj coś fajnego, aby kontynuować.</p>
+    <a href="{{ url_for('shop.index') }}" class="btn btn-primary mt-2">Wróć do sklepu</a>
+  </div>
+  {% endif %}
+</div>
 {% endblock %}

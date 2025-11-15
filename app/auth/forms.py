@@ -1,5 +1,5 @@
 # app/auth/forms.py
-from wtforms import StringField, PasswordField, SubmitField
+from wtforms import StringField, PasswordField, SubmitField, BooleanField  # [ZMIANA] Import BooleanField
 from wtforms.fields import EmailField
 from wtforms.validators import DataRequired, Email, Length, EqualTo, ValidationError
 from flask_wtf import FlaskForm
@@ -59,4 +59,6 @@ class RegistrationForm(FlaskForm):
 class LoginForm(FlaskForm):
     identifier = StringField("Email lub nazwa użytkownika", validators=[DataRequired()])
     password = PasswordField("Hasło", validators=[DataRequired()])
+    # [ZMIANA] Dodane pole "Pamiętaj mnie" (Token 4.0)
+    remember_me = BooleanField("Nie wylogowuj mnie")
     submit = SubmitField("Zaloguj się")

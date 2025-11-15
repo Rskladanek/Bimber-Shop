@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Zarządzaj sliderem: {{ slider.name }}{% endblock %}
+
+{% block content %}
+{% include "admin/_toolbar.html" %}
+
+<div class="container my-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h1 class="h3 mb-1">Zarządzaj sliderem</h1>
+      <p class="muted mb-0">
+        Slider: <strong class="text-light">{{ slider.name }}</strong>
+      </p>
+    </div>
+    <a href="{{ url_for('admin.sliders') }}" class="btn btn-outline-light btn-sm">
+      <i class="bi bi-chevron-left me-1"></i> Wróć do listy sliderów
+    </a>
+  </div>
+
+  <div class="row g-4">
+    <!-- LEWA: Dodawanie -->
+    <div class="col-lg-4">
+      <div class="card">
+        <div class="card-header">
+          Dodaj produkt do slidera
+        </div>
+        <div class="card-body">
+          <form method="POST" action="{{ url_for('admin.slider_detail', slider_id=slider.id) }}">
+            {{ form.hidden_tag() }}
+            
+            <div class="mb-3">
+              {{ form.product_id.label(class="form-label") }}
+              {{ form.product_id(class="form-select" + (" is-invalid" if form.product_id.errors else "")) }}
+              {% for e in form.product_id.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="mb-3">
+              {{ form.order_index.label(class="form-label") }}
+              {{ form.order_index(class="form-control" + (" is-invalid" if form.order_index.errors else "")) }}
+              <div class="form-text muted">Niższa liczba = wyświetla się wcześniej.</div>
+              {% for e in form.order_index.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="d-grid">
+              {{ form.submit(class="btn btn-primary") }}
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRAWA: Lista -->
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-header">
+          Elementy w sliderze ({{ items_in_slider|length }})
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-hover mb-0 align-middle">
+            <thead>
+              <tr>
+                <th style="width: 80px;">Kolejność</th>
+                <th>Produkt</th>
+                <th style="width: 100px;" class="text-end">Akcja</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in items_in_slider %}
+              <tr>
+                <td class="muted text-center">{{ item.order_index }}</td>
+                <td>
+                  <div class="d-flex align-items-center gap-3">
+                    {% if item.product and item.product.image_filename %}
+                      <img src="{{ url_for('static', filename='images/products/' ~ item.product.image_filename) }}" alt="" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                    {% else %}
+                      <img src="https://placehold.co/50x50/020617/374151?text=?" alt="" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                    {% endif %}
+                    <div>
+                      <a href="{{ url_for('admin.product_detail', product_id=item.product_id) }}" class="text-light text-decoration-none">
+                        {{ item.product.name if item.product else 'Brak produktu' }}
+                      </a>
+                      <div class="small muted">
+                        Cena: {{ "%.2f"|format(item.product.price) }} PLN
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td class="text-end">
+                  <form action="{{ url_for('admin.remove_slider_item', item_id=item.id) }}" method="POST" onsubmit="return confirm('Usunąć ten produkt ze slidera?');">
+                    {{ csrf_token() if csrf_token is defined else '' }}
+                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="3" class="text-center py-4 muted">
+                  Brak produktów w tym sliderze. Dodaj je po lewej.
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

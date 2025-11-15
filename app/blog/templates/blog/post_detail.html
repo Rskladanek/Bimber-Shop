@@ -1,139 +1,8 @@
 {% extends "base.html" %}
 {% block title %}{{ post.title }} – Blog{% endblock %}
 
-{% block head %}
-<style>
-  .blog-article-page{
-    color:#e5e7eb;
-  }
-  .blog-article{
-    padding:18px 20px 20px;
-    border-radius:18px;
-    background:rgba(15,23,42,.96);
-    border:1px solid rgba(148,163,184,.35);
-    box-shadow:0 24px 60px rgba(15,23,42,.9);
-  }
-  .blog-article-meta{
-    display:flex;
-    flex-wrap:wrap;
-    gap:8px;
-    align-items:center;
-    font-size:.8rem;
-    color:#9ca3af;
-    text-transform:uppercase;
-    letter-spacing:.1em;
-  }
-  .blog-article-meta-pill{
-    padding:2px 9px;
-    border-radius:999px;
-    border:1px solid rgba(129,140,248,.75);
-    background:rgba(15,23,42,.9);
-  }
-  .blog-article-title{
-    margin-top:10px;
-    font-size:1.9rem;
-    font-weight:700;
-  }
-  .blog-article-sub{
-    margin-top:4px;
-    font-size:.98rem;
-    color:#9ca3af;
-  }
-  .blog-article-author{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    margin-top:10px;
-    font-size:.85rem;
-    color:#9ca3af;
-  }
-  .blog-article-author .avatar{
-    width:30px;
-    height:30px;
-    border-radius:999px;
-    background:radial-gradient(circle at 30% 0%,#f97316,#ea580c);
-  }
-
-  .blog-article-cover{
-    margin:14px -4px 10px;
-    border-radius:16px;
-    overflow:hidden;
-    background:#020617;
-  }
-  .blog-article-cover img{
-    width:100%;
-    display:block;
-    object-fit:cover;
-    max-height:360px;
-  }
-
-  .blog-article-body{
-    margin-top:8px;
-    font-size:.98rem;
-    line-height:1.7;
-    color:#e5e7eb;
-  }
-  .blog-article-body h2,
-  .blog-article-body h3,
-  .blog-article-body h4{
-    margin-top:1.4rem;
-    margin-bottom:.4rem;
-    font-weight:600;
-  }
-  .blog-article-body p{
-    margin-bottom:.7rem;
-  }
-  .blog-article-body a{
-    color:#c4b5fd;
-    text-decoration:underline;
-    text-decoration-thickness:1px;
-  }
-  .blog-article-body ul,
-  .blog-article-body ol{
-    padding-left:1.3rem;
-    margin-bottom:.7rem;
-  }
-
-  .blog-tags{
-    margin-top:14px;
-    display:flex;
-    flex-wrap:wrap;
-    gap:6px;
-  }
-  .blog-tag{
-    padding:3px 9px;
-    border-radius:999px;
-    font-size:.8rem;
-    border:1px solid rgba(148,163,184,.6);
-    color:#cbd5f5;
-  }
-  .blog-nav{
-    margin-top:18px;
-    padding-top:12px;
-    border-top:1px dashed rgba(75,85,99,.9);
-    display:flex;
-    justify-content:space-between;
-    gap:10px;
-    font-size:.85rem;
-  }
-  .blog-nav a{
-    color:#9ca3af;
-    text-decoration:none;
-  }
-  .blog-nav a:hover{
-    color:#c4b5fd;
-  }
-
-  @media (max-width:767.98px){
-    .blog-article{
-      padding:14px 14px 16px;
-    }
-    .blog-article-title{
-      font-size:1.5rem;
-    }
-  }
-</style>
-{% endblock %}
+<!-- [ZMIANA] Usunięto cały blok head i style, wszystko jest teraz w style.css -->
+{% block head %}{% endblock %}
 
 {% block content %}
 <div class="container my-3 blog-article-page">
@@ -167,8 +36,8 @@
             <div class="avatar"></div>
             <div>
               <div>
-                {% if post.author and (post.author.name or post.author.email) %}
-                  {{ post.author.name or post.author.email }}
+                {% if post.author and (post.author.username or post.author.email) %} <!-- [ZMIANA] Sprawdzenie username -->
+                  {{ post.author.username or post.author.email }}
                 {% else %}
                   Redakcja Bimberek
                 {% endif %}
@@ -180,15 +49,17 @@
 
         {% if post.cover_image %}
         <div class="blog-article-cover">
+          <!-- [ZMIANA] Dodano alt text -->
           <img src="{{ url_for('static', filename='images/blog/' ~ post.cover_image) }}" alt="{{ post.title }}">
         </div>
         {% endif %}
 
         <div class="blog-article-body">
-          {% if post.body_html %}
-            {{ post.body_html|safe }}
+          {% if post.content_html %} <!-- [ZMIANA] Użycie content_html -->
+            {{ post.content_html|safe }}
           {% else %}
-            {{ post.body|safe }}
+            <!-- Fallback dla starych postów -->
+            {{ post.content|safe }}
           {% endif %}
         </div>
 
@@ -205,7 +76,7 @@
         <div class="blog-nav">
           <div>
             {% if prev_post %}
-              <div class="text-muted-soft mb-1">Poprzedni wpis</div>
+              <div class="muted mb-1">Poprzedni wpis</div> <!-- [ZMIANA] Użycie klasy muted -->
               <a href="{{ url_for('blog.post_detail', post_id=prev_post.id) }}">
                 ‹ {{ prev_post.title }}
               </a>
@@ -213,7 +84,7 @@
           </div>
           <div class="text-end">
             {% if next_post %}
-              <div class="text-muted-soft mb-1">Następny wpis</div>
+              <div class="muted mb-1">Następny wpis</div> <!-- [ZMIANA] Użycie klasy muted -->
               <a href="{{ url_for('blog.post_detail', post_id=next_post.id) }}">
                 {{ next_post.title }} ›
               </a>
@@ -221,6 +92,56 @@
           </div>
         </div>
       </article>
+
+      <!-- [ZMIANA] Dodanie sekcji komentarzy (jeśli istnieje formularz) -->
+      {% if form is defined %}
+      <div class="section-card section-pad mt-4">
+        <h2 class="h5">Komentarze</h2>
+        <form method="post" action="{{ url_for('blog.post_detail', post_id=post.id) }}">
+          {{ form.hidden_tag() }}
+          <div class="mb-2">
+            {{ form.content.label(class="form-label") }}
+            {{ form.content(class="form-control", rows=4) }}
+            {% for e in form.content.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm">
+            Dodaj komentarz
+          </button>
+          {% if not current_user.is_authenticated %}
+          <p class="small muted mt-1 mb-0">
+            Musisz być <a href="{{ url_for('auth.login', next=request.url) }}">zalogowany</a>, aby dodać komentarz.
+          </p>
+          {% endif %}
+        </form>
+
+        {% if comments %}
+          <hr style="border-color: rgba(148,163,184,.25);" class="my-3">
+          <div class="d-flex flex-column gap-3">
+            {% for c in comments %}
+            <div class="d-flex gap-2">
+              <div class="avatar" style="width: 30px; height: 30px; border-radius: 50%; background: radial-gradient(circle at 30% 0%,#f97316,#ea580c); flex-shrink: 0;"></div>
+              <div>
+                <div class="small">
+                  <span class="fw-semibold">{{ c.user.username or c.user.email or 'Użytkownik' }}</span>
+                  <span class="muted ms-1">
+                    {% if c.created_at %}
+                      • {{ c.created_at.strftime('%Y-%m-%d') }}
+                    {% endif %}
+                  </span>
+                </div>
+                <div class="blog-article-body p-0" style="font-size: 0.95rem;">
+                  {{ c.content|safe }}
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="muted small mb-0 mt-2">Brak komentarzy.</p>
+        {% endif %}
+      </div>
+      {% endif %}
+
     </div>
   </div>
 </div>

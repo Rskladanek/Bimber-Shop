@@ -1,13 +1,28 @@
 {% extends "base.html" %}
 {% block title %}Zamówienie - Bimberek{% endblock %}
+
 {% block content %}
-<h2>Adres wysyłki</h2>
-<form method="POST">
-  {{ form.hidden_tag() }}
-  <div class="mb-3">
-    {{ form.address.label(class="form-label") }}
-    {{ form.address(class="form-control") }}
+<div class="container my-3" style="max-width: 720px;">
+  <div class="section-card section-pad">
+    <h1 class="h3 mb-4">Adres wysyłki</h1>
+    <p class="muted">Prosimy o podanie adresu, na który mamy wysłać zamówienie. Płatność zrealizujesz w kolejnym kroku.</p>
+    
+    <form method="POST" novalidate>
+      {{ form.hidden_tag() }}
+      
+      <div class="mb-3">
+        {{ form.address.label(class="form-label") }}
+        {{ form.address(class="form-control", rows=4, placeholder="Jan Kowalski\nul. Słoneczna 10/15\n00-001 Warszawa") }}
+        {% for e in form.address.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+      </div>
+      
+      <div class="d-grid gap-2 d-sm-flex justify-content-sm-between align-items-center">
+        <a href="{{ url_for('shop.cart_view') }}" class="btn btn-outline-light">
+          <i class="bi bi-chevron-left me-1"></i> Wróć do koszyka
+        </a>
+        {{ form.submit(class="btn btn-primary btn-lg", value="Przejdź do płatności") }}
+      </div>
+    </form>
   </div>
-  {{ form.submit(class="btn btn-primary") }}
-</form>
+</div>
 {% endblock %}

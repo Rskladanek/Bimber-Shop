@@ -114,6 +114,32 @@ class SliderForm(FlaskForm):
     submit = SubmitField("Zapisz slider")
 
 
+# [ZMIANA] Dodajemy formularz do dodawania produktów do slidera
+class AddSliderItemForm(FlaskForm):
+    """Formularz dodawania produktu do slidera."""
+    product_id = SelectField(
+        "Wybierz produkt",
+        coerce=int,
+        validators=[DataRequired(message="Musisz wybrać produkt.")]
+    )
+    order_index = IntegerField(
+        "Kolejność (opcjonalnie)",
+        default=0,
+        validators=[Optional(), NumberRange(min=0)]
+    )
+    submit = SubmitField("Dodaj do slidera")
+
+    def __init__(self, *args, **kwargs):
+        """Dynamiczne ładowanie listy produktów."""
+        super().__init__(*args, **kwargs)
+        try:
+            from app.models import Product
+            products = Product.query.order_by(Product.name).all()
+            self.product_id.choices = [(p.id, p.name) for p in products]
+        except Exception:
+            self.product_id.choices = []
+
+
 class SliderItemForm(FlaskForm):
     """Formularz pojedynczego slajdu w sliderze."""
 

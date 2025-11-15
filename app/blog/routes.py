@@ -1,6 +1,6 @@
 # app/blog/routes.py
 
-from flask import render_template, redirect, url_for, flash, request, abort
+from flask import render_template, redirect, url_for, flash, request, abort, current_app
 from flask_login import login_required, current_user
 from sqlalchemy.exc import OperationalError
 
@@ -179,6 +179,7 @@ def new_post():
         is_admin_flag = is_admin(current_user)
         status = "zaakceptowany" if is_admin_flag else "oczekuje"
 
+        # [ZMIANA] Rozszerzono blok try...except, aby złapać wszystkie błędy
         try:
             post = Post(
                 title=form.title.data.strip(),
@@ -188,9 +189,11 @@ def new_post():
             )
             db.session.add(post)
             db.session.commit()
-        except OperationalError:
+        except Exception as e: # [ZMIANA] Łapiemy ogólny błąd, a nie tylko OperationalError
             db.session.rollback()
-            flash("Nie udało się zapisać wpisu.", "danger")
+            # [ZMIANA] Logujemy błąd do konsoli serwera (tam gdzie uruchamiasz 'flask run')
+            current_app.logger.error(f"BŁĄD ZAPISU POSTA: {e}") 
+            flash("Nie udało się zapisać wpisu. Sprawdź konsolę serwera.", "danger") # [ZMIANA] Lepszy komunikat
             return render_template("blog/new_post.html", form=form)
 
         if is_admin_flag:

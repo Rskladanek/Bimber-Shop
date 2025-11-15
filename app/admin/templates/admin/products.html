@@ -9,7 +9,7 @@
   <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
       <h1 class="h3 mb-1">Produkty</h1>
-      <p class="text-muted mb-0">
+      <p class="muted mb-0"> <!-- [ZMIANA] Użycie klasy .muted -->
         Zarządzaj ofertą sklepu, edytuj ceny, opisy i stany magazynowe.
       </p>
     </div>
@@ -20,8 +20,10 @@
     </div>
   </div>
 
-  <div class="card shadow-sm">
+  <!-- [ZMIANA] Usunięto .shadow-sm, style pochodzą z .admin-page .card -->
+  <div class="card">
     <div class="card-body p-0">
+      <!-- [ZMIANA] Style dla tabeli są teraz w style.css -->
       <table class="table table-hover mb-0 align-middle">
         <thead>
           <tr>
@@ -36,10 +38,11 @@
         <tbody>
           {% for p in products %}
           <tr>
-            <td class="text-muted">{{ p.id }}</td>
+            <td class="muted">{{ p.id }}</td> <!-- [ZMIANA] Użycie klasy .muted -->
             <td>
+              <!-- [ZMIANA] Linki w tabeli powinny mieć jaśniejszy kolor -->
               <a href="{{ url_for('admin.product_detail', product_id=p.id) }}"
-                 class="text-decoration-none">
+                 class="text-light text-decoration-none">
                 {{ p.name }}
               </a>
             </td>
@@ -54,7 +57,7 @@
               {% if p.category %}
                 {{ p.category.name }}
               {% else %}
-                <span class="text-muted">brak</span>
+                <span class="muted">brak</span>
               {% endif %}
             </td>
             <td>

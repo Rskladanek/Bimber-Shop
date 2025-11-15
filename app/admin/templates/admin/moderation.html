@@ -1,29 +1,76 @@
 {% extends "base.html" %}
 {% block title %}Moderacja komentarzy{% endblock %}
+
 {% block content %}
-<h2>Moderacja komentarzy</h2>
-<table class="table table-striped">
-  <thead>
-    <tr><th>ID</th><th>Autor</th><th>Treść</th><th>Dotyczy</th><th>Akcje</th></tr>
-  </thead>
-  <tbody>
-  {% for c in comments %}
-    <tr>
-      <td>{{ c.id }}</td>
-      <td>{{ c.user.email }}</td>
-      <td>{{ c.content }}</td>
-      <td>
-        {% if c.product_id %}Produkt: {{ c.product.name }}{% endif %}
-        {% if c.post_id %}Post: {{ c.post.title }}{% endif %}
-      </td>
-      <td>
-        <a href="{{ url_for('admin.approve_comment', comment_id=c.id) }}" class="btn btn-success btn-sm">Akceptuj</a>
-        <a href="{{ url_for('admin.reject_comment', comment_id=c.id) }}" class="btn btn-danger btn-sm">Odrzuć</a>
-      </td>
-    </tr>
-  {% else %}
-    <tr><td colspan="5">Brak komentarzy do moderacji.</td></tr>
-  {% endfor %}
-  </tbody>
-</table>
+<!-- [ZMIANA] Dodanie paska narzędzi admina dla spójności -->
+{% include "admin/_toolbar.html" %}
+
+<div class="container my-4">
+
+  <!-- [ZMIANA] Dodanie standardowego nagłówka strony admina -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h1 class="h3 mb-1">Moderacja komentarzy</h1>
+      <p class="muted mb-0">
+        Akceptuj lub odrzucaj komentarze do produktów i wpisów na blogu.
+      </p>
+    </div>
+  </div>
+
+  <!-- [ZMIANA] Objęcie tabeli w .card, aby style .admin-page .card .table zadziałały -->
+  <div class="card">
+    <div class="card-body p-0">
+      <!-- [ZMIANA] Dodanie .table-hover i .align-middle dla spójności -->
+      <table class="table table-striped table-hover mb-0 align-middle">
+        <thead>
+          <tr>
+            <th style="width: 50px;">ID</th>
+            <th>Autor</th>
+            <th>Treść</th>
+            <th>Dotyczy</th>
+            <th style="width: 230px;" class="text-end">Akcje</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in comments %}
+          <tr>
+            <td class="muted">{{ c.id }}</td>
+            <td class="muted">{{ c.user.email }}</td>
+            <td>{{ c.content|truncate(100) }}</td>
+            <td class="small">
+              {% if c.product_id %}
+                Produkt: <a href="{{ url_for('shop.product_detail', product_id=c.product_id) }}" class="text-light" target="_blank">{{ c.product.name }}</a>
+              {% endif %}
+              {% if c.post_id %}
+                Wpis: <a href="{{ url_for('blog.post_detail', post_id=c.post_id) }}" class="text-light" target="_blank">{{ c.post.title }}</a>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <!-- [ZMIANA] Użycie POST (bezpieczniejsze) i stylów outline -->
+              {% if c.status != 'zaakceptowany' %}
+              <form action="{{ url_for('admin.approve_comment', comment_id=c.id) }}" method="POST" class="d-inline">
+                {{ csrf_token() if csrf_token is defined else '' }}
+                <button type="submit" class="btn btn-sm btn-outline-success">Akceptuj</button>
+              </form>
+              {% endif %}
+              
+              {% if c.status != 'odrzucony' %}
+              <form action="{{ url_for('admin.reject_comment', comment_id=c.id) }}" method="POST" class="d-inline">
+                {{ csrf_token() if csrf_token is defined else '' }}
+                <button type="submit" class="btn btn-sm btn-outline-danger">Odrzuć</button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" class="text-center py-4 muted">Brak komentarzy do moderacji.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
 {% endblock %}

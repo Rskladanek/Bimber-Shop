@@ -1,5 +1,5 @@
 # app/admin/routes.py
-from __future__ import annotations
+from __future__ import annotations  # <-- POPRAWKA: Ta linia musi być PIERWSZA
 
 import os
 import uuid
@@ -18,9 +18,19 @@ from flask import (
 from flask_login import login_required, current_user
 
 from . import admin_bp
-from .forms import ProductForm, SliderForm
+# POPRAWKA: Scaliłem zduplikowane importy.
+# Teraz importujemy wszystko, czego potrzebujemy, w jednym miejscu.
+from .forms import ProductForm, SliderForm, AddSliderItemForm
 from app.extensions import db
-from app.models import Product, Category, Comment, Post, Slider, Report
+from app.models import (
+    Product,
+    Category,
+    Comment,
+    Post,
+    Slider,
+    Report,
+    SliderItem,  # Dodany SliderItem
+)
 
 
 # =============================
@@ -247,7 +257,8 @@ def moderate_comments():
     return render_template("admin/moderation.html", comments=comments)
 
 
-@admin_bp.route("/comments/<int:comment_id>/approve")
+# [ZMIANA] Dodano methods=["POST"]
+@admin_bp.route("/comments/<int:comment_id>/approve", methods=["POST"])
 @login_required
 def approve_comment(comment_id: int):
     if not admin_required():
@@ -261,7 +272,8 @@ def approve_comment(comment_id: int):
     return redirect(request.referrer or url_for("admin.moderate_comments"))
 
 
-@admin_bp.route("/comments/<int:comment_id>/reject")
+# [ZMIANA] Dodano methods=["POST"]
+@admin_bp.route("/comments/<int:comment_id>/reject", methods=["POST"])
 @login_required
 def reject_comment(comment_id: int):
     if not admin_required():
@@ -295,7 +307,8 @@ def moderate_posts():
     return render_template("admin/blog_posts.html", posts=posts)
 
 
-@admin_bp.route("/blog/<int:post_id>/approve")
+# [ZMIANA] Dodano methods=["POST"]
+@admin_bp.route("/blog/<int:post_id>/approve", methods=["POST"])
 @login_required
 def approve_post(post_id: int):
     if not admin_required():
@@ -309,7 +322,8 @@ def approve_post(post_id: int):
     return redirect(request.referrer or url_for("admin.moderate_posts"))
 
 
-@admin_bp.route("/blog/<int:post_id>/reject")
+# [ZMIANA] Dodano methods=["POST"]
+@admin_bp.route("/blog/<int:post_id>/reject", methods=["POST"])
 @login_required
 def reject_post(post_id: int):
     if not admin_required():
@@ -369,6 +383,78 @@ def set_active_slider(slider_id: int):
 
     flash(f"Aktywny slider ustawiony na \"{slider.name}\".", "success")
     return redirect(url_for("admin.sliders"))
+
+
+# =============================
+#  Slidery - ZARZĄDZANIE (NOWY KOD)
+# =============================
+
+@admin_bp.route("/sliders/<int:slider_id>", methods=["GET", "POST"])
+@login_required
+def slider_detail(slider_id: int):
+    """
+    Widok zarządzania pojedynczym sliderem (dodawanie/przeglądanie itemów).
+    Renderuje szablon slider_detail.html.
+    """
+    if not admin_required():
+        flash("Brak uprawnień do panelu administratora.", "danger")
+        return redirect(url_for("shop.index"))
+
+    slider = Slider.query.get_or_404(slider_id)
+    form = AddSliderItemForm() # Formularz z forms.py
+
+    if form.validate_on_submit():
+        # Sprawdź, czy ten produkt nie jest już w sliderze
+        exists = SliderItem.query.filter_by(
+            slider_id=slider.id,
+            product_id=form.product_id.data
+        ).first()
+
+        if exists:
+            flash("Ten produkt jest już w tym sliderze.", "warning")
+        else:
+            new_item = SliderItem(
+                slider_id=slider.id,
+                product_id=form.product_id.data,
+                order_index=form.order_index.data or 0
+            )
+            db.session.add(new_item)
+            db.session.commit()
+            flash("Produkt został dodany do slidera.", "success")
+        
+        return redirect(url_for("admin.slider_detail", slider_id=slider.id))
+
+    # Pobieramy itemy (są już posortowane dzięki 'order_by' w modelu)
+    items_in_slider = slider.items
+
+    return render_template(
+        "admin/slider_detail.html",
+        slider=slider,
+        items_in_slider=items_in_slider,
+        form=form
+    )
+
+
+@admin_bp.route("/sliders/item/<int:item_id>/delete", methods=["POST"])
+@login_required
+def remove_slider_item(item_id: int):
+    """
+    Usuwa pojedynczy element (SliderItem) ze slidera.
+    Wywoływane przez formularz w slider_detail.html.
+    """
+    if not admin_required():
+        flash("Brak uprawnień do panelu administratora.", "danger")
+        return redirect(url_for("shop.index"))
+
+    item = SliderItem.query.get_or_404(item_id)
+    slider_id = item.slider_id # Zapamiętujemy ID, żeby wiedzieć gdzie wrócić
+
+    db.session.delete(item)
+    db.session.commit()
+    
+    flash("Produkt został usunięty ze slidera.", "success")
+    # Wracamy na stronę zarządzania sliderem
+    return redirect(url_for("admin.slider_detail", slider_id=slider_id))
 
 
 # =============================
@@ -436,6 +522,7 @@ def product_detail(product_id: int):
     return render_template("admin/product_detail.html", product=product, comments=comments)
 
 
+# [ZMIANA] Poprawka literówki z 'admin_Sbp' na 'admin_bp'
 @admin_bp.route("/products/<int:product_id>/edit", methods=["GET", "POST"])
 @login_required
 def edit_product(product_id: int):

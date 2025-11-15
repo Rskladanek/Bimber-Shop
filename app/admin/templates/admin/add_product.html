@@ -1,5 +1,7 @@
 {# app/admin/templates/admin/add_product.html #}
 {% extends "base.html" %}
+<!-- [ZMIANA] Całkowite usunięcie bloku 'head' i skryptów TinyMCE -->
+{% block head %}{% endblock %}
 
 {% block content %}
 
@@ -13,7 +15,7 @@
         {% if edit_mode %}Edytuj produkt{% else %}Nowy produkt{% endif %}
       </h1>
       {% if edit_mode and product %}
-        <div class="text-secondary small">
+        <div class="muted small"> <!-- [ZMIANA] Użycie klasy .muted -->
           ID #{{ product.id }}
         </div>
       {% endif %}
@@ -33,7 +35,8 @@
     </div>
   </div>
 
-  <div class="card bg-dark border-secondary">
+  <!-- [ZMIANA] Usunięto .bg-dark .border-secondary, styl pochodzi z .admin-page .card -->
+  <div class="card">
     <div class="card-body">
 
       <form method="POST" enctype="multipart/form-data" novalidate>
@@ -69,7 +72,7 @@
                   {{ form.price.label(class="form-label") }}
                   <div class="input-group">
                     {{ form.price(class="form-control" + (" is-invalid" if form.price.errors else "")) }}
-                    <span class="input-group-text">PLN</span>
+                    <span class="input-group-text" style="background-color: #374151; border-color: rgba(55, 65, 81, 0.9); color: #e5e7eb;">PLN</span>
                   </div>
                   {% for error in form.price.errors %}
                     <div class="invalid-feedback d-block">{{ error }}</div>
@@ -81,7 +84,7 @@
                 <div class="mb-3">
                   {{ form.stock.label(class="form-label") }}
                   {{ form.stock(class="form-control" + (" is-invalid" if form.stock.errors else ""), min="0") }}
-                  <div class="form-text text-secondary">
+                  <div class="form-text muted"> <!-- [ZMIANA] Użycie klasy .muted -->
                     Możesz zostawić puste, jeśli nie śledzisz stanu magazynowego.
                   </div>
                   {% for error in form.stock.errors %}
@@ -95,7 +98,7 @@
               {{ form.category.label(class="form-label") }}
               {{ form.category(class="form-select" + (" is-invalid" if form.category.errors else "")) }}
               {% if not form.category.choices or form.category.choices|length == 1 %}
-                <div class="form-text text-secondary">
+                <div class="form-text muted"> <!-- [ZMIANA] Użycie klasy .muted -->
                   Na razie masz tylko opcję „brak kategorii”. Kategorie możesz dodać później w bazie.
                 </div>
               {% endif %}
@@ -106,8 +109,10 @@
 
             <div class="mb-3">
               {{ form.description.label(class="form-label") }}
-              {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), rows="6") }}
-              <div class="form-text text-secondary">
+              <!-- [ZMIANA] Przywrócenie zwykłego pola textarea -->
+              <!-- Usunięto id="description" i dodano z powrotem klasę .form-control -->
+              {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), rows="8") }}
+              <div class="form-text muted"> <!-- [ZMIANA] Użycie klasy .muted -->
                 Krótki, konkretny opis – dlaczego klient ma to kupić.
               </div>
               {% for error in form.description.errors %}
@@ -120,11 +125,12 @@
             {% if edit_mode and product and product.image_filename %}
               <div class="mb-3">
                 <label class="form-label">Aktualne zdjęcie</label>
-                <div class="border border-secondary rounded-3 bg-black p-2 text-center">
+                <!-- [ZMIANA] Użycie .section-card dla lepszego kontrastu -->
+                <div class="section-card section-pad text-center">
                   <img src="{{ url_for('static', filename='images/products/' ~ product.image_filename) }}"
-                       alt="{{ product.name }}" class="img-fluid rounded-2">
+                       alt="{{ product.name }}" class="img-fluid rounded-2" style="max-height: 200px;">
                 </div>
-                <div class="form-text text-secondary mt-1">
+                <div class="form-text muted mt-1"> <!-- [ZMIANA] Użycie klasy .muted -->
                   Jeśli nie wybierzesz nowego pliku, zostanie to zdjęcie.
                 </div>
               </div>
@@ -133,7 +139,7 @@
             <div class="mb-3">
               {{ form.image.label(class="form-label") }}
               {{ form.image(class="form-control" + (" is-invalid" if form.image.errors else "")) }}
-              <div class="form-text text-secondary">
+              <div class="form-text muted"> <!-- [ZMIANA] Użycie klasy .muted -->
                 Dozwolone formaty: JPG, JPEG, PNG, GIF.
               </div>
               {% for error in form.image.errors %}
@@ -145,8 +151,9 @@
 
         </div>
 
-        <div class="d-flex justify-content-between align-items-center pt-3 mt-3 border-top border-secondary">
-          <div class="text-secondary small">
+        <!-- [ZMIANA] Poprawka obramowania -->
+        <div class="d-flex justify-content-between align-items-center pt-3 mt-3 border-top" style="border-color: rgba(148,163,184,.25) !important;">
+          <div class="muted small">
             {% if edit_mode %}
               Po zapisaniu zmiany będą od razu widoczne w sklepie.
             {% else %}

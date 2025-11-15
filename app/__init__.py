@@ -33,8 +33,9 @@ def create_app(config_class=Config) -> Flask:
     def load_user(user_id: str):
         return User.query.get(int(user_id))
 
-    # --- OAuth (Google) ---
+    # --- OAuth (Authlib) ---
     oauth.init_app(app)
+    # Rejestracja Google
     oauth.register(
         name="google",
         client_id=app.config.get("GOOGLE_CLIENT_ID"),
@@ -42,6 +43,21 @@ def create_app(config_class=Config) -> Flask:
         server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
         client_kwargs={"scope": "openid email profile"},
     )
+    
+    # [ZMIANA] Rejestracja Facebook (Logowanie 5.0)
+    oauth.register(
+        name="facebook",
+        client_id=app.config.get("FACEBOOK_CLIENT_ID"),
+        client_secret=app.config.get("FACEBOOK_CLIENT_SECRET"),
+        authorize_url="https://www.facebook.com/v10.0/dialog/oauth",
+        access_token_url="https://graph.facebook.com/v10.0/oauth/access_token",
+        # Używamy authorize_params, aby jawnie poprosić o email i profil
+        authorize_params={"scope": "email,public_profile"},
+        # Definiujemy endpoint API do pobrania danych użytkownika
+        userinfo_endpoint="https://graph.facebook.com/me?fields=id,name,email",
+        client_kwargs={"scope": "email public_profile"},
+    )
+
 
     # --- Rejestracja blueprintów ---
     app.register_blueprint(auth_bp, url_prefix="/auth")

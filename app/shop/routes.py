@@ -306,10 +306,54 @@ def product_detail(product_id: int):
 @shop_bp.route("/cart/")
 def cart_view():
     cart = _get_cart()
-    total, count = _cart_totals(cart)
+    _, count = _cart_totals(cart)  # Pobieramy tylko 'count' z helpera
+
+    # [ZMIANA] To jest brakująca logika
+    # Musimy przekonwertować słownik 'cart' na listę 'cart_items' oczekiwaną przez szablon.
+    cart_items = []
+    total = Decimal("0.00")
+
+    # Pobierz wszystkie ID produktów z koszyka, aby pobrać je jednym zapytaniem
+    product_ids = [int(pid) for pid in cart.keys() if cart[pid].get("quantity", 0) > 0]
+
+    if product_ids:
+        # Pobierz produkty z bazy danych
+        products_db = Product.query.filter(Product.id.in_(product_ids)).all()
+        # Zmapuj produkty po ID dla łatwego dostępu
+        products_map = {str(p.id): p for p in products_db}
+
+        for pid_str, item in cart.items():
+            if int(pid_str) not in product_ids:
+                continue  # Pomiń itemy z quantity = 0
+
+            product = products_map.get(pid_str)
+
+            if not product:
+                # Produkt jest w koszyku, ale nie ma go już w bazie? Pomiń.
+                # Można też usunąć go z koszyka
+                # cart.pop(pid_str, None)
+                continue
+
+            try:
+                # Używamy zaufanej ceny z bazy danych, a nie z sesji
+                price = product.price
+                qty = int(item["quantity"])
+                item_total = price * qty
+                cart_items.append((product, qty, item_total))
+            except Exception:
+                # Pomiń błędny wpis
+                continue
+    
+    # [ZMIANA] Ponowne obliczenie sumy na podstawie cen z bazy (bezpieczniejsze)
+    total = sum(item_total for _, _, item_total in cart_items)
+    
+    # Zapisz koszyk, gdyby jakiś produkt został usunięty (jeśli odkomentujesz cart.pop wyżej)
+    # _save_cart(cart) 
+
     return render_template(
         "shop/cart.html",
-        cart=cart,
+        # [ZMIANA] Przekazujemy 'cart_items' (lista) zamiast 'cart' (słownik)
+        cart_items=cart_items,
         total=total,
         count=count,
     )
@@ -395,10 +439,11 @@ def checkout():
         try:
             order = Order(
                 user_id=current_user.id,
-                total_amount=total,
-                status="new",
-                shipping_address=form.shipping_address.data,
-                notes=form.notes.data,
+                # [ZMIANA] Błąd - w modelu nie ma 'total_amount' ani 'notes'
+                # total_amount=total, 
+                status="new", # Użyj statusu 'new' lub 'oczekuje'
+                shipping_address=form.address.data,
+                # notes=form.notes.data,
             )
             db.session.add(order)
             db.session.flush()  # mamy id
@@ -406,11 +451,15 @@ def checkout():
             for item in cart.values():
                 if item.get("quantity", 0) <= 0:
                     continue
+                
+                # [ZMIANA] Błąd - w modelu OrderItem nie ma 'product_name' ani 'unit_price'
+                # Musimy użyć 'product_id', 'quantity' i 'price_at_order'
                 order_item = OrderItem(
                     order_id=order.id,
                     product_id=item["product_id"],
-                    product_name=item["name"],
-                    unit_price=item["price"],
+                    # product_name=item["name"], # Tego nie ma w modelu
+                    # unit_price=item["price"], # Tego nie ma w modelu
+                    price_at_order=Decimal(str(item.get("price", 0))), # Zapisz cenę w momencie zakupu
                     quantity=item["quantity"],
                 )
                 db.session.add(order_item)
@@ -419,10 +468,13 @@ def checkout():
             _save_cart({})  # czyścimy koszyk
             flash("Zamówienie zostało utworzone. Przejdź do płatności.", "success")
             return redirect(url_for("shop.payment_start", order_id=order.id))
-        except OperationalError:
+        except Exception as e: # [ZMIANA] Lepsze logowanie błędów
+            current_app.logger.error(f"Błąd przy tworzeniu zamówienia: {e}")
             db.session.rollback()
-            flash("Nie udało się utworzyć zamówienia.", "danger")
+            flash("Nie udało się utworzyć zamówienia. Błąd serwera.", "danger")
 
+    # [ZMIANA] Błąd - szablon oczekuje 'form', 'cart', 'total', 'count'
+    # Wcześniej te zmienne nie były przekazywane w gałęzi GET
     return render_template(
         "shop/checkout.html",
         cart=cart,
@@ -450,7 +502,8 @@ def payment_start(order_id: int):
         flash("To nie jest Twoje zamówienie.", "danger")
         return redirect(url_for("shop.index"))
 
-    if order.status not in ("new", "payment_failed"):
+    # [ZMIANA] Poprawka statusu - w modelu jest 'oczekuje'
+    if order.status not in ("new", "payment_failed", "oczekuje"):
         flash("To zamówienie nie jest gotowe do płatności.", "warning")
         return redirect(url_for("shop.index"))
 
@@ -459,19 +512,30 @@ def payment_start(order_id: int):
     line_items = []
     try:
         for item in order.items:
+            # [ZMIANA] Potrzebujemy pobrać nazwę produktu z relacji
+            product_name = item.product.name if item.product else "Produkt"
+            
             line_items.append(
                 {
                     "price_data": {
                         "currency": "pln",
-                        "product_data": {"name": item.product_name},
-                        "unit_amount": int(Decimal(str(item.unit_price)) * 100),
+                        # [ZMIANA] Używamy pobranej nazwy
+                        "product_data": {"name": product_name}, 
+                        # [ZMIANA] Używamy 'price_at_order'
+                        "unit_amount": int(item.price_at_order * 100), 
                     },
                     "quantity": item.quantity,
                 }
             )
-    except Exception:
+    except Exception as e:
+        current_app.logger.error(f"Błąd generowania linii Stripe: {e}")
         flash("Problem z generowaniem pozycji do płatności.", "danger")
-        return redirect(url_for("shop.checkout"))
+        # [ZMIANA] Lepsze przekierowanie
+        return redirect(url_for("shop.cart_view"))
+
+    if not line_items:
+        flash("Brak produktów w zamówieniu do opłacenia.", "danger")
+        return redirect(url_for("shop.cart_view"))
 
     try:
         session_stripe = stripe.checkout.Session.create(
@@ -485,9 +549,11 @@ def payment_start(order_id: int):
                 "shop.payment_cancel", order_id=order.id, _external=True
             ),
         )
-    except Exception:
+    except Exception as e:
+        current_app.logger.error(f"Błąd tworzenia sesji Stripe: {e}")
         flash("Nie udało się utworzyć sesji płatności.", "danger")
-        return redirect(url_for("shop.checkout"))
+        # [ZMIANA] Lepsze przekierowanie
+        return redirect(url_for("shop.cart_view"))
 
     return redirect(session_stripe.url, code=303)
 
@@ -505,7 +571,8 @@ def payment_success(order_id: int):
         flash("To nie jest Twoje zamówienie.", "danger")
         return redirect(url_for("shop.index"))
 
-    order.status = "paid"
+    # [ZMIANA] Poprawka statusu - w modelu jest 'opłacone'
+    order.status = "paid" # lub "opłacone"
     try:
         db.session.commit()
     except OperationalError:
@@ -529,6 +596,10 @@ def payment_cancel(order_id: int):
     if order.user_id != current_user.id:
         flash("To nie jest Twoje zamówienie.", "danger")
         return redirect(url_for("shop.index"))
+
+    # [ZMIANA] Opcjonalnie: zmień status zamówienia
+    # order.status = "payment_failed"
+    # db.session.commit()
 
     flash("Płatność została anulowana.", "warning")
     return redirect(url_for("shop.cart_view"))

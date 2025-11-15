@@ -3,10 +3,11 @@ from flask import render_template, redirect, url_for, flash, request, current_ap
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import or_
+import uuid  # [ZMIANA] Do generowania losowych haseł dla OAuth
 
 from . import auth_bp
 from .forms import RegistrationForm, LoginForm
-from app.extensions import db, oauth  # patrz sekcja 4 – init OAuth
+from app.extensions import db, oauth
 from app.models import User
 
 # ---------- Rejestracja ----------
@@ -35,7 +36,9 @@ def register():
 
         db.session.add(user)
         db.session.commit()
-        login_user(user)
+        
+        # [ZMIANA] Logujemy od razu z domyślnym remember=False
+        login_user(user) 
         flash("Konto utworzone. Witaj!", "success")
         return redirect(url_for("shop.index"))
 
@@ -63,9 +66,13 @@ def login():
 
         if not q or not check_password_hash(q.password_hash, form.password.data):
             flash("Nieprawidłowe dane logowania.", "danger")
+            # [ZMIANA] Zachowanie pól (punkt 2.0) - przekazujemy form
             return render_template("auth/login.html", form=form), 401
 
-        login_user(q)
+        # [ZMIANA] Dodana obsługa "Pamiętaj mnie" (Token 4.0)
+        remember_me = form.remember_me.data
+        login_user(q, remember=remember_me)
+        
         flash("Zalogowano.", "success")
         next_url = request.args.get("next")
         return redirect(next_url or url_for("shop.index"))
@@ -82,10 +89,106 @@ def logout():
     return redirect(url_for("shop.index"))
 
 
+# ---------- Funkcja pomocnicza do tworzenia/logowania użytkownika OAuth ----------
+def _find_or_create_oauth_user(provider_name: str, provider_user_id: str, user_info: dict):
+    """
+    Logika do wyszukiwania lub tworzenia użytkownika na podstawie danych z OAuth.
+    Działa dla Google i Facebooka.
+    """
+    email = (user_info.get("email") or "").lower()
+    name = user_info.get("name")
+    
+    # 1. Zbuduj zapytanie (logika scalania kont)
+    query_filter = []
+    
+    # Pola specyficzne dla providera
+    if provider_name == 'google' and hasattr(User, 'google_id'):
+        query_filter.append(User.google_id == provider_user_id)
+    elif provider_name == 'facebook' and hasattr(User, 'facebook_id'):
+        query_filter.append(User.facebook_id == provider_user_id)
+        
+    # Zawsze sprawdzaj e-mail, jeśli jest dostępny
+    if email:
+        query_filter.append(User.email == email)
+        
+    if not query_filter:
+        # Sytuacja awaryjna - brak ID i emaila?
+        flash("Błąd logowania: Nie można uzyskać identyfikatora ani e-maila od dostawcy.", "danger")
+        return None
+
+    user = User.query.filter(or_(*query_filter)).first()
+
+    # 2. Jeśli użytkownik nie istnieje - stwórz go
+    if not user:
+        if not email:
+            flash(f"Logowanie przez {provider_name.capitalize()} wymaga udostępnienia adresu e-mail.", "danger")
+            return None
+            
+        user = User(email=email)
+        
+        # Ustaw unikalną nazwę użytkownika (jeśli model jej wymaga)
+        if hasattr(User, "username"):
+            base = (name or email.split("@")[0]).replace(" ", "")
+            candidate = re.sub(r"[^A-Za-z0-9_.\-]", "", base)[:30] or "user"
+            
+            i = 0
+            while User.query.filter(User.username.ilike(candidate)).first():
+                i += 1
+                suffix = str(i)
+                candidate = candidate[:(32 - len(suffix))] + suffix
+            user.username = candidate
+
+        # Ustaw domyślną rolę
+        if hasattr(User, "role") and not getattr(user, "role", None):
+            user.role = "user"
+            
+        # Ustaw losowe hasło (konto nie będzie logowane lokalnie hasłem)
+        random_pass = str(uuid.uuid4())
+        user.password_hash = generate_password_hash(random_pass)
+
+        # Ustaw ID providera
+        if provider_name == 'google' and hasattr(User, 'google_id'):
+            user.google_id = provider_user_id
+        elif provider_name == 'facebook' and hasattr(User, 'facebook_id'):
+            user.facebook_id = provider_user_id
+
+        db.session.add(user)
+        # Commit jest potrzebny teraz, aby zakończyć transakcję i móc zalogować
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Błąd tworzenia użytkownika OAuth: {e}")
+            flash("Wystąpił błąd podczas tworzenia konta.", "danger")
+            return None
+            
+    # 3. Jeśli użytkownik istnieje - uzupełnij brakujące ID (scalanie)
+    else:
+        needs_commit = False
+        if provider_name == 'google' and hasattr(User, 'google_id') and not user.google_id:
+            user.google_id = provider_user_id
+            needs_commit = True
+        elif provider_name == 'facebook' and hasattr(User, 'facebook_id') and not user.facebook_id:
+            user.facebook_id = provider_user_id
+            needs_commit = True
+            
+        if needs_commit:
+            try:
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                current_app.logger.error(f"Błąd scalania konta OAuth: {e}")
+                flash("Wystąpił błąd podczas łączenia konta.", "danger")
+                return None
+
+    # 4. Zaloguj użytkownika (zawsze bez "remember me" dla OAuth)
+    login_user(user, remember=False)
+    return user
+
+
 # ---------- Google OAuth (Authlib) ----------
 @auth_bp.route("/google/login")
 def google_login():
-    # zabezpieczenie: brak konfiguracji → wyłącz przycisk
     if not current_app.config.get("GOOGLE_CLIENT_ID"):
         flash("Logowanie Google nie jest skonfigurowane.", "warning")
         return redirect(url_for("auth.login"))
@@ -96,57 +199,80 @@ def google_login():
 @auth_bp.route("/google/callback")
 def google_callback():
     if not current_app.config.get("GOOGLE_CLIENT_ID"):
-        flash("Logowanie Google nie jest skonfigurowane.", "warning")
         return redirect(url_for("auth.login"))
 
-    token = oauth.google.authorize_access_token()
-    userinfo = oauth.google.parse_id_token(token)
+    try:
+        token = oauth.google.authorize_access_token()
+        # parse_id_token automatycznie weryfikuje token
+        userinfo = oauth.google.parse_id_token(token)
+    except Exception as e:
+        current_app.logger.error(f"Błąd autoryzacji Google: {e}")
+        flash("Błąd logowania przez Google. Spróbuj ponownie.", "danger")
+        return redirect(url_for("auth.login"))
 
     if not userinfo:
-        flash("Błąd logowania przez Google.", "danger")
+        flash("Błąd logowania przez Google: Nie uzyskano danych.", "danger")
         return redirect(url_for("auth.login"))
 
-    google_sub = userinfo.get("sub")
-    email = (userinfo.get("email") or "").lower()
-    name = userinfo.get("name") or (email.split("@")[0] if email else None)
+    google_sub = userinfo.get("sub") # 'sub' to standardowe pole ID w OpenID
+    
+    user = _find_or_create_oauth_user(
+        provider_name='google',
+        provider_user_id=google_sub,
+        user_info=userinfo
+    )
 
-    # Szukamy po google_id lub mailu (scalanie kont)
-    user = None
-    if hasattr(User, "google_id"):
-        user = User.query.filter(
-            or_(User.google_id == google_sub, User.email == email)
-        ).first()
+    if user:
+        flash("Zalogowano przez Google.", "success")
+        return redirect(url_for("shop.index"))
     else:
-        user = User.query.filter_by(email=email).first()
+        # Komunikat flash został już ustawiony w funkcji pomocniczej
+        return redirect(url_for("auth.login"))
 
-    if not user:
-        user = User(email=email)
-        if hasattr(User, "username"):
-            base = (name or email.split("@")[0]).replace(" ", "")
-            candidate = base[:32] if base else "user"
-            # prosty unik nazw – dokładamy liczby, aż zaskoczy
-            if hasattr(User, "username"):
-                i = 0
-                while User.query.filter(User.username.ilike(candidate)).first():
-                    i += 1
-                    candidate = (base + str(i))[:32]
-                user.username = candidate
-        if hasattr(User, "role") and not getattr(user, "role", None):
-            user.role = "user"
-        # pusta “losowa” blokada hasła lokalnego (nie logujemy hasłem)
-        user.password_hash = generate_password_hash(token["access_token"][:16])
 
-        if hasattr(User, "google_id"):
-            user.google_id = google_sub
+# [ZMIANA] Dodane endpointy dla Facebook (Logowanie 5.0)
+# ---------- Facebook OAuth (Authlib) ----------
+@auth_bp.route("/facebook/login")
+def facebook_login():
+    if not current_app.config.get("FACEBOOK_CLIENT_ID"):
+        flash("Logowanie Facebook nie jest skonfigurowane.", "warning")
+        return redirect(url_for("auth.login"))
+    redirect_uri = url_for("auth.facebook_callback", _external=True)
+    return oauth.facebook.authorize_redirect(redirect_uri)
 
-        db.session.add(user)
-        db.session.commit()
+
+@auth_bp.route("/facebook/callback")
+def facebook_callback():
+    if not current_app.config.get("FACEBOOK_CLIENT_ID"):
+        return redirect(url_for("auth.login"))
+
+    try:
+        token = oauth.facebook.authorize_access_token()
+        # Dla Facebooka musimy ręcznie pobrać dane profilu
+        resp = oauth.facebook.get('me?fields=id,name,email', token=token)
+        resp.raise_for_status() # Rzuci błędem jeśli API Facebooka zwróci błąd
+        userinfo = resp.json()
+        
+    except Exception as e:
+        current_app.logger.error(f"Błąd autoryzacji Facebook: {e}")
+        flash("Błąd logowania przez Facebook. Spróbuj ponownie.", "danger")
+        return redirect(url_for("auth.login"))
+
+    if not userinfo or not userinfo.get("id"):
+        flash("Błąd logowania przez Facebook: Nie uzyskano danych.", "danger")
+        return redirect(url_for("auth.login"))
+
+    facebook_id = userinfo.get("id")
+
+    user = _find_or_create_oauth_user(
+        provider_name='facebook',
+        provider_user_id=facebook_id,
+        user_info=userinfo
+    )
+    
+    if user:
+        flash("Zalogowano przez Facebook.", "success")
+        return redirect(url_for("shop.index"))
     else:
-        # uzupełnij google_id jeśli brak
-        if hasattr(User, "google_id") and not getattr(user, "google_id", None):
-            user.google_id = google_sub
-            db.session.commit()
-
-    login_user(user)
-    flash("Zalogowano przez Google.", "success")
-    return redirect(url_for("shop.index"))
+        # Komunikat flash został już ustawiony w funkcji pomocniczej
+        return redirect(url_for("auth.login"))

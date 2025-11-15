@@ -1,214 +1,8 @@
 {% extends "base.html" %}
 {% block title %}Blog{% endblock %}
 
-{% block head %}
-<style>
-  .blog-page{
-    color:#e5e7eb;
-  }
-  .blog-hero{
-    border-radius:18px;
-    padding:18px 20px 14px;
-    background:
-      radial-gradient(980px 480px at 0% 0%, rgba(129,140,248,.35), transparent 60%),
-      radial-gradient(920px 520px at 100% 0%, rgba(236,72,153,.35), transparent 60%),
-      rgba(15,23,42,.95);
-    border:1px solid rgba(129,140,248,.4);
-    box-shadow:0 24px 60px rgba(15,23,42,.9);
-  }
-  .blog-hero-title{
-    font-size:1.6rem;
-    font-weight:700;
-    letter-spacing:.04em;
-    text-transform:uppercase;
-  }
-  .blog-hero-sub{
-    margin-top:4px;
-    font-size:.95rem;
-    color:#9ca3af;
-  }
-  .blog-chip{
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-    padding:3px 9px;
-    border-radius:999px;
-    background:rgba(15,23,42,.9);
-    border:1px solid rgba(148,163,184,.45);
-    font-size:.8rem;
-    color:#cbd5f5;
-  }
-  .blog-chip i{
-    font-size:.9rem;
-  }
-
-  /* lista postów */
-  .blog-list{
-    display:flex;
-    flex-direction:column;
-    gap:14px;
-    margin-top:14px;
-  }
-  .blog-card{
-    display:flex;
-    gap:14px;
-    padding:10px;
-    border-radius:16px;
-    background:rgba(15,23,42,.9);
-    border:1px solid rgba(148,163,184,.28);
-    transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
-  }
-  .blog-card:hover{
-    transform:translateY(-2px);
-    border-color:rgba(168,85,247,.8);
-    box-shadow:0 18px 40px rgba(15,23,42,.85);
-  }
-  .blog-thumb{
-    flex:0 0 130px;
-    border-radius:14px;
-    overflow:hidden;
-    background:#020617;
-  }
-  .blog-thumb img{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-    display:block;
-  }
-  .blog-card-body{
-    flex:1;
-    display:flex;
-    flex-direction:column;
-    gap:6px;
-    min-width:0;
-  }
-  .blog-meta{
-    display:flex;
-    flex-wrap:wrap;
-    gap:6px;
-    align-items:center;
-    font-size:.78rem;
-    color:#9ca3af;
-  }
-  .blog-meta-pill{
-    padding:2px 8px;
-    border-radius:999px;
-    border:1px solid rgba(129,140,248,.7);
-    background:rgba(15,23,42,.9);
-    font-size:.78rem;
-    text-transform:uppercase;
-    letter-spacing:.08em;
-  }
-  .blog-title{
-    font-size:1.02rem;
-    margin:0;
-  }
-  .blog-title a{
-    color:#e5e7eb;
-    text-decoration:none;
-  }
-  .blog-title a:hover{
-    color:#c4b5fd;
-  }
-  .blog-excerpt{
-    margin:0;
-    font-size:.9rem;
-    color:#9ca3af;
-  }
-  .blog-footer{
-    margin-top:4px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:8px;
-    font-size:.8rem;
-    color:#9ca3af;
-  }
-  .blog-author{
-    display:flex;
-    align-items:center;
-    gap:6px;
-  }
-  .blog-author-avatar{
-    width:22px;
-    height:22px;
-    border-radius:999px;
-    background:radial-gradient(circle at 30% 0%,#f97316,#ea580c);
-  }
-
-  /* sidebar */
-  .blog-sidebar{
-    position:sticky;
-    top:82px;
-    display:flex;
-    flex-direction:column;
-    gap:12px;
-  }
-  .blog-side-card{
-    padding:12px;
-    border-radius:16px;
-    background:rgba(15,23,42,.9);
-    border:1px solid rgba(148,163,184,.3);
-  }
-  .blog-side-title{
-    font-size:.85rem;
-    text-transform:uppercase;
-    letter-spacing:.1em;
-    color:#9ca3af;
-    margin-bottom:6px;
-  }
-  .blog-cat-list,
-  .blog-recent-list{
-    list-style:none;
-    margin:0;
-    padding:0;
-    display:flex;
-    flex-direction:column;
-    gap:6px;
-  }
-  .blog-cat-link{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:6px 8px;
-    border-radius:999px;
-    text-decoration:none;
-    border:1px solid rgba(55,65,81,.8);
-    background:rgba(15,23,42,.9);
-    font-size:.85rem;
-    color:#e5e7eb;
-  }
-  .blog-cat-link span:last-child{
-    font-size:.78rem;
-    color:#9ca3af;
-  }
-  .blog-cat-link.active{
-    border-color:rgba(168,85,247,.9);
-    box-shadow:0 0 0 1px rgba(168,85,247,.5) inset;
-  }
-  .blog-recent-item a{
-    color:#e5e7eb;
-    text-decoration:none;
-    font-size:.9rem;
-  }
-  .blog-recent-item a:hover{
-    color:#c4b5fd;
-  }
-  .blog-recent-meta{
-    font-size:.75rem;
-    color:#9ca3af;
-  }
-
-  .text-muted-soft{color:#9ca3af;font-size:.85rem;}
-
-  @media (max-width:767.98px){
-    .blog-card{
-      flex-direction:column;
-    }
-    .blog-thumb{width:100%;height:170px;}
-  }
-</style>
-{% endblock %}
+<!-- [ZMIANA] Usunięto cały blok head i style, wszystko jest teraz w style.css -->
+{% block head %}{% endblock %}
 
 {% block content %}
 <div class="container my-3 blog-page">
@@ -226,7 +20,7 @@
           <div class="d-flex flex-column align-items-end gap-1">
             <span class="blog-chip">
               <i class="bi bi-journal-text"></i>
-              {{ posts.total if posts is defined else (posts.items|length if posts and posts.items is defined else 0) }} wpisów
+              {{ posts.total if posts is defined and posts.total is defined else (posts.items|length if posts and posts.items is defined else 0) }} wpisów
             </span>
             {% if q %}
               <span class="text-muted-soft">Filtr: „{{ q }}”</span>
@@ -241,9 +35,11 @@
           <article class="blog-card">
             <a class="blog-thumb" href="{{ url_for('blog.post_detail', post_id=post.id) }}">
               {% if post.cover_image %}
+                <!-- [ZMIANA] Dodano alt text -->
                 <img src="{{ url_for('static', filename='images/blog/' ~ post.cover_image) }}" alt="{{ post.title }}">
               {% else %}
-                <img src="{{ url_for('static', filename='images/placeholder_wide.jpg') }}" alt="">
+                <!-- [ZMIANA] Użycie placehold.co -->
+                <img src="https://placehold.co/400x300/020617/374151?text=Bimberek" alt="Domyślny obrazek wpisu">
               {% endif %}
             </a>
             <div class="blog-card-body">
@@ -267,17 +63,17 @@
               </h2>
               {% if post.subtitle %}
                 <p class="blog-excerpt">{{ post.subtitle }}</p>
-              {% elif post.body_html %}
+              {% elif post.content_html %} <!-- [ZMIANA] Użycie content_html dla auto-skrótu -->
                 <p class="blog-excerpt">
-                  {{ post.body_html|striptags|truncate(180) }}
+                  {{ post.content_html|striptags|truncate(180) }}
                 </p>
               {% endif %}
               <div class="blog-footer">
                 <div class="blog-author">
                   <div class="blog-author-avatar"></div>
                   <span>
-                    {% if post.author and (post.author.name or post.author.email) %}
-                      {{ post.author.name or post.author.email }}
+                    {% if post.author and (post.author.username or post.author.email) %} <!-- [ZMIANA] Sprawdzenie username -->
+                      {{ post.author.username or post.author.email }}
                     {% else %}
                       Redakcja
                     {% endif %}
@@ -292,16 +88,21 @@
           {% endfor %}
         </div>
 
+        <!-- [ZMIANA] Paginacja wyśrodkowana i z kropkami -->
         {% if posts.pages > 1 %}
-        <nav class="mt-3">
+        <nav class="mt-3 d-flex justify-content-center">
           <ul class="pagination pagination-sm mb-0">
             <li class="page-item {% if not posts.has_prev %}disabled{% endif %}">
               <a class="page-link" href="{{ url_for('blog.post_list', page=posts.prev_num, cat=current_category_id, q=q) }}">«</a>
             </li>
-            {% for p in range(1, posts.pages+1) %}
-              <li class="page-item {% if p==posts.page %}active{% endif %}">
-                <a class="page-link" href="{{ url_for('blog.post_list', page=p, cat=current_category_id, q=q) }}">{{ p }}</a>
-              </li>
+            {% for p_num in posts.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+              {% if p_num %}
+                <li class="page-item {% if p_num == posts.page %}active{% endif %}">
+                  <a class="page-link" href="{{ url_for('blog.post_list', page=p_num, cat=current_category_id, q=q) }}">{{ p_num }}</a>
+                </li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">…</span></li>
+              {% endif %}
             {% endfor %}
             <li class="page-item {% if not posts.has_next %}disabled{% endif %}">
               <a class="page-link" href="{{ url_for('blog.post_list', page=posts.next_num, cat=current_category_id, q=q) }}">»</a>
@@ -309,9 +110,11 @@
           </ul>
         </nav>
         {% endif %}
+
       {% else %}
-        <div class="alert alert-secondary mt-3 mb-0">
-          Na razie brak wpisów. Dodaj coś w panelu admina.
+        <div class="section-card section-pad text-center mt-3"> <!-- [ZMIANA] Użycie section-card -->
+          <h2 class="h5">Na razie brak wpisów.</h2>
+          <p class="muted">Dodaj coś w panelu admina lub poczekaj na moderację.</p>
         </div>
       {% endif %}
     </div>
@@ -347,7 +150,7 @@
               <a class="blog-cat-link {% if not current_category_id %}active{% endif %}"
                  href="{{ url_for('blog.post_list', q=q) }}">
                 <span>Wszystko</span>
-                {% if posts is defined %}
+                {% if posts is defined and posts.total is defined %}
                   <span>{{ posts.total }}</span>
                 {% endif %}
               </a>
@@ -358,14 +161,14 @@
                 <a class="blog-cat-link {% if current_category_id==c.id %}active{% endif %}"
                    href="{{ url_for('blog.post_list', cat=c.id, q=q) }}">
                   <span>{{ c.name }}</span>
-                  {% if c.posts_count is defined %}
+                  {% if c.posts_count is defined %} <!-- Zakładając, że model to zlicza -->
                     <span>{{ c.posts_count }}</span>
                   {% endif %}
                 </a>
               </li>
               {% endfor %}
             {% else %}
-              <li class="text-muted-soft">Dodaj kategorie w panelu admina.</li>
+              <li class="text-muted-soft">Brak kategorii.</li>
             {% endif %}
           </ul>
         </div>
@@ -390,6 +193,13 @@
           </ul>
         </div>
         {% endif %}
+
+        <!-- [ZMIANA] Dodano przycisk do tworzenia posta -->
+        <div class="blog-side-card d-grid">
+           <a href="{{ url_for('blog.new_post') }}" class="btn btn-primary">
+             <i class="bi bi-pencil-square me-1"></i> Napisz nowy wpis
+           </a>
+        </div>
       </aside>
     </div>
   </div>

@@ -3,7 +3,8 @@
 
 {% block head %}
   {{ super() }}
-  <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js"
+  <!-- [ZMIANA] Zaktualizowano klucz API dla TinyMCE -->
+  <script src="https://cdn.tiny.cloud/1/2i0ks3b4m5el8yo6lc6evykh2nthpo79lcxu7w3nzneudzn8/tinymce/6/tinymce.min.js"
           referrerpolicy="origin"></script>
   <script>
     tinymce.init({
@@ -11,7 +12,11 @@
       menubar: false,
       plugins: 'link lists code',
       toolbar: 'undo redo | bold italic | bullist numlist | link | code',
-      language: 'pl'
+      language: 'pl',
+      
+      /* [ZMIANA] Dodanie opcji dla ciemnego motywu */
+      skin: (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'oxide-dark' : 'oxide'),
+      content_css: (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default')
     });
   </script>
 {% endblock %}
@@ -20,41 +25,41 @@
 <div class="container my-3">
   <div class="row justify-content-center">
     <div class="col-lg-8 col-xl-7">
-      <div class="card bg-dark text-light border-0 shadow-lg">
-        <div class="card-body">
-          <h1 class="h4 mb-3">Nowy wpis na blogu</h1>
-          <p class="text-muted small mb-4">
-            Twój wpis trafi do moderacji i zostanie opublikowany po akceptacji administratora.
-          </p>
+      <!-- [ZMIANA] Użycie klas .section-card i .section-pad zamiast .card -->
+      <div class="section-card section-pad">
+        <h1 class="h4 mb-3">Nowy wpis na blogu</h1>
+        <p class="muted small mb-4">
+          Twój wpis trafi do moderacji i zostanie opublikowany po akceptacji administratora.
+        </p>
 
-          <form method="POST">
-            {{ form.hidden_tag() }}
+        <form method="POST" novalidate> <!-- [ZMIANA] dodano novalidate -->
+          {{ form.hidden_tag() }}
 
-            <div class="mb-3">
-              {{ form.title.label(class="form-label") }}
-              {{ form.title(class="form-control", placeholder="Tytuł wpisu") }}
-              {% for error in form.title.errors %}
-                <div class="text-danger small">{{ error }}</div>
-              {% endfor %}
-            </div>
+          <div class="mb-3">
+            {{ form.title.label(class="form-label") }}
+            {{ form.title(class="form-control", placeholder="Tytuł wpisu") }}
+            {% for error in form.title.errors %}
+              <div class="text-danger small mt-1">{{ error }}</div>
+            {% endfor %}
+          </div>
 
-            <div class="mb-3">
-              {{ form.content.label(class="form-label") }}
-              {{ form.content(class="form-control", id="content", rows="10") }}
-              {% for error in form.content.errors %}
-                <div class="text-danger small">{{ error }}</div>
-              {% endfor %}
-            </div>
+          <div class="mb-3">
+            {{ form.content.label(class="form-label") }}
+            <!-- [ZMIANA] Usunięto .form-control, TinyMCE sam dodaje style -->
+            {{ form.content(id="content", rows="10") }}
+            {% for error in form.content.errors %}
+              <div class="text-danger small mt-1">{{ error }}</div>
+            {% endfor %}
+          </div>
 
-            <div class="d-flex justify-content-between align-items-center">
-              <a href="{{ url_for('blog.post_list') }}"
-                 class="btn btn-outline-light btn-sm">
-                ‹ Powrót do bloga
-              </a>
-              {{ form.submit(class="btn btn-primary btn-sm") }}
-            </div>
-          </form>
-        </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <a href="{{ url_for('blog.post_list') }}"
+               class="btn btn-outline-light btn-sm">
+              ‹ Powrót do bloga
+            </a>
+            {{ form.submit(class="btn btn-primary btn-sm") }}
+          </div>
+        </form>
       </div>
     </div>
   </div>

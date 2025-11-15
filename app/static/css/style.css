@@ -1,238 +1,84 @@
+/* [ZMIANA] Ten plik CSS zastępuje stary style.css oraz style inline
+z base.html i index.html.
+
+Zawiera on:
+1. Główny motyw (ciemne tło, gradient, czcionka Montserrat)
+2. Style responsywnego slidera (index.html)
+3. Style responsywnej siatki produktów (index.html)
+*/
+
 /* =========================
-   GLOBAL / RESET
+   1. GŁÓWNY MOTYW (z base.html)
    ========================= */
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-html,
-body {
-  height: 100%;
+:root {
+  --nav-bg: #020617;
+  --body-bg: #020617;
+  --accent: #7c3aed;
+  --text: #e5e7eb;
 }
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background:
-    radial-gradient(circle at top left, #1d1036 0, transparent 55%),
-    radial-gradient(circle at bottom right, #020617 0, #020617 55%);
-  color: #e5e7eb;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-a:hover {
-  text-decoration: none;
-}
-
-img {
-  max-width: 100%;
-  height: auto;
-}
-
-/* =========================
-   LAYOUT
-   ========================= */
-
-.page-shell {
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  /* Użycie czcionki Montserrat zdefiniowanej w base.html */
+  font-family: 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  /* Ciemny motyw z gradientem */
+  background:
+    radial-gradient(1200px 600px at 20% -10%, rgba(124, 58, 237, .30), transparent 60%),
+    radial-gradient(1000px 800px at 110% 10%, rgba(59, 130, 246, .25), transparent 60%),
+    var(--body-bg);
+  color: var(--text);
+  /* Poprawka Bootstrapa - domyślny kolor tła dla alertów, kart itp. */
+  --bs-body-bg: transparent;
+  --bs-body-color: var(--text);
 }
-
-.main-content {
-  flex: 1 0 auto;
-}
-
-.site-footer {
-  flex-shrink: 0;
-  padding: 1.75rem 0 1.25rem;
-  font-size: 0.8rem;
-  color: #6b7280;
-  border-top: 1px solid rgba(31, 41, 55, 0.9);
-}
-
-/* Containers */
-
-.container-narrow {
-  width: 100%;
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: 0 1.5rem;
-}
-
-.container-narrow-lg {
-  width: 100%;
-  max-width: 1240px;
-  margin: 0 auto;
-  padding: 0 1.5rem;
-}
-
-/* =========================
-   NAVBAR
-   ========================= */
 
 .navbar {
-  background: linear-gradient(90deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.92));
-  border-bottom: 1px solid rgba(15, 23, 42, 1);
+  background: linear-gradient(180deg, rgba(15, 23, 42, .98), rgba(15, 23, 42, .96));
+  border-bottom: 1px solid rgba(30, 64, 175, .55);
   backdrop-filter: blur(18px);
 }
 
-.navbar-brand {
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  font-size: 0.9rem;
+.navbar-brand,
+.navbar-nav .nav-link {
+  font-weight: 500;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  font-size: .78rem;
 }
 
-.navbar .nav-link {
-  font-size: 0.88rem;
-  color: #9ca3af;
-  padding-inline: 0.9rem;
+.navbar-nav .nav-link {
+  color: rgba(226, 232, 240, .78);
+  font-size: .95rem;
 }
 
-.navbar .nav-link:hover {
-  color: #e5e7eb;
-}
-
+.navbar .nav-link:hover,
 .navbar .nav-link.active {
-  color: #f9fafb;
-  font-weight: 500;
+  color: #fff;
 }
 
-.navbar-user {
-  font-size: 0.86rem;
+.footer {
+  background: linear-gradient(180deg, rgba(15, 23, 42, .96), #020617);
+  border-top: 1px solid rgba(30, 64, 175, .55);
   color: #9ca3af;
+  font-size: .85rem;
 }
 
-/* =========================
-   TYPO
-   ========================= */
-
-h1,
-.h1 {
-  font-size: clamp(2.1rem, 2.4vw + 1.2rem, 2.6rem);
-  font-weight: 700;
-}
-
-h2,
-.h2 {
-  font-size: 1.4rem;
-  font-weight: 600;
-}
-
-h3,
-.h3 {
-  font-size: 1.1rem;
-  font-weight: 600;
-}
-
-/* =========================
-   CARDS / PANELS
-   ========================= */
-
-.card {
-  background: rgba(15, 23, 42, 0.96);
-  border-radius: 1.2rem;
-  border: 1px solid rgba(31, 41, 55, 0.95);
-  box-shadow: 0 18px 35px rgba(15, 23, 42, 0.9);
-}
-
-.card-header {
-  border-bottom-color: rgba(31, 41, 55, 0.9);
-}
-
-.card-footer {
-  border-top-color: rgba(31, 41, 55, 0.9);
-}
-
-.card-muted {
-  background: radial-gradient(circle at top left, #111827 0, #020617 60%);
-}
-
-/* =========================
-   BUTTONS
-   ========================= */
-
-.btn {
-  font-size: 0.86rem;
-  font-weight: 500;
-  border-radius: 999px;
-  border-width: 1px;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #7c3aed, #a855f7);
-  border-color: transparent;
-  color: #f9fafb;
-  box-shadow: 0 10px 25px rgba(124, 58, 237, 0.45);
-}
-
-.btn-primary:hover {
-  background: linear-gradient(135deg, #8b5cf6, #c084fc);
-  border-color: transparent;
-}
-
-.btn-outline-primary {
+a {
   color: #c4b5fd;
-  border-color: rgba(129, 140, 248, 0.7);
+  text-decoration: none; /* [ZMIANA] Dodane dla pewności */
 }
 
-.btn-outline-primary:hover {
-  background: rgba(79, 70, 229, 0.18);
-  border-color: rgba(129, 140, 248, 1);
-  color: #e5e7eb;
+a:hover {
+  color: #a78bfa;
 }
 
-.btn-outline-light {
-  color: #e5e7eb;
-  border-color: rgba(148, 163, 184, 0.6);
-}
-
-.btn-outline-light:hover {
-  background: rgba(148, 163, 184, 0.12);
-  border-color: rgba(148, 163, 184, 0.9);
-}
-
-/* =========================
-   BADGES / CHIPS
-   ========================= */
-
-.badge-pill {
-  border-radius: 999px;
-  padding: 0.1rem 0.65rem;
-  font-size: 0.72rem;
-}
-
-.badge-soft-orange {
-  background: rgba(249, 115, 22, 0.12);
-  color: #fed7aa;
-}
-
-.badge-soft-green {
-  background: rgba(16, 185, 129, 0.11);
-  color: #6ee7b7;
-}
-
-.badge-soft-slate {
-  background: rgba(30, 64, 175, 0.25);
-  color: #c7d2fe;
-}
-
-/* =========================
-   FORMS
-   ========================= */
-
+/* Dostosowanie komponentów Bootstrap do ciemnego motywu */
 .form-control,
 .form-select,
 textarea {
   background-color: rgba(15, 23, 42, 0.96);
-  border-radius: 0.75rem;
+  border-radius: 0.5rem; /* Mniejsze zaokrąglenie */
   border: 1px solid rgba(55, 65, 81, 0.9);
   color: #e5e7eb;
   font-size: 0.88rem;
@@ -243,8 +89,13 @@ textarea {
 textarea:focus {
   border-color: rgba(129, 140, 248, 0.9);
   outline: none;
-  box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.5);
+  box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.5);
   background-color: rgba(15, 23, 42, 0.98);
+  color: #e5e7eb; /* Wymuszenie koloru tekstu */
+}
+
+.form-control::placeholder {
+  color: #6b7280;
 }
 
 .form-label {
@@ -252,94 +103,227 @@ textarea:focus {
   color: #9ca3af;
 }
 
+/* Poprawki dla dropdownów */
+.dropdown-menu {
+  background-color: #1f2937; /* Ciemne tło */
+  border-color: rgba(55, 65, 81, 0.9);
+}
+.dropdown-item {
+  color: #d1d5db;
+}
+.dropdown-item:hover {
+  background-color: #374151;
+  color: #f9fafb;
+}
+
+/* Alerty - domyślne style Bootstrapa są OK */
+
+/* Admin: mocniejszy kontrast */
+.admin-page .card {
+  background: rgba(15, 23, 42, .98);
+  border-color: rgba(148, 163, 184, .45);
+  color: #e5e7eb;
+}
+
+.admin-page .card * {
+  color: #e5e7eb !important;
+}
+
+.admin-page .text-muted,
+.admin-page .text-muted-soft {
+  color: #9ca3af !important;
+}
+
+
 /* =========================
-   UTILITIES
+   2. STYLE SKLEPU (z index.html)
    ========================= */
 
-.text-muted-soft {
+/* kontrast + layout specyficzny dla strony sklepu */
+.section-card {
+  background: rgba(17, 24, 39, .75);
+  border: 1px solid rgba(148, 163, 184, .25);
+  border-radius: 16px; /* Bardziej zaokrąglone */
+}
+
+.section-pad {
+  padding: 14px;
+}
+
+.sidebar {
+  position: sticky;
+  top: 82px; /* Dostosuj do wysokości belki nawigacyjnej */
+}
+
+.muted {
   color: #9ca3af;
 }
 
-.text-truncate-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+/* slider - responsywny */
+.slider-wrap {
+  position: relative;
+}
+
+.slider-track {
+  display: flex;
+  overflow: hidden;
+  scroll-behavior: smooth;
+  border-radius: 16px;
+}
+
+.slide {
+  padding: 10px;
+  /* Definicja responsywności slidera (zgodnie z opisem) */
+  min-width: 100%; /* 1 element mobilnie */
+}
+@media (min-width: 768px) {
+  .slide { min-width: 50%; } /* 2 elementy na tabletach */
+}
+@media (min-width: 1200px) {
+  .slide { min-width: 33.3333%; } /* 3 elementy na desktopie */
+}
+
+.slide-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
-.text-truncate-3 {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.ratio-4x3 {
-  aspect-ratio: 4 / 3;
+.slide-img {
+  aspect-ratio: 16/9;
   object-fit: cover;
+  width: 100%;
 }
 
-.shadow-soft {
-  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.9);
+.slide-body {
+  padding: 12px;
+}
+
+.slider-nav {
+  position: absolute;
+  right: 10px;
+  bottom: 12px;
+  display: flex;
+  gap: 8px;
+  z-index: 10; /* Na wierzchu */
+}
+
+.slider-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(148, 163, 184, .4);
+  background: rgba(2, 6, 23, .6);
+  color: var(--text); /* Kolor ikony */
+  backdrop-filter: blur(4px);
+}
+.slider-btn:hover {
+  background: rgba(30, 64, 175, 0.5);
+}
+
+/* kategorie (prawa kolumna) */
+.cat-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cat-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-decoration: none;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, .35);
+  background: rgba(17, 24, 39, .6);
+  color: #e5e7eb;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+.cat-link:hover {
+  background: rgba(148, 163, 184, 0.1);
+  border-color: rgba(148, 163, 184, .5);
+}
+
+.cat-link.active {
+  border-color: rgba(168, 85, 247, .8);
+  box-shadow: 0 0 0 2px rgba(168, 85, 247, .25) inset;
+  background: rgba(124, 58, 237, .15);
+  color: #fff;
 }
 
 /* =========================
-   SITE-SPECIFIC SMALL THINGS
+   3. GRID PRODUKTÓW (z index.html)
    ========================= */
 
-.footer-tech {
-  font-size: 0.78rem;
-  color: #4b5563;
+.grid {
+  display: grid;
+  gap: 14px;
+  /* Domyślnie 1 kolumna */
+}
+/* Definicja responsywnej siatki produktów (zgodnie z opisem) */
+@media (min-width: 576px) {
+  .grid { grid-template-columns: repeat(2, 1fr); } /* 2 kolumny */
+}
+@media (min-width: 992px) {
+  .grid { grid-template-columns: repeat(3, 1fr); } /* 3 kolumny */
+}
+@media (min-width: 1400px) {
+  .grid { grid-template-columns: repeat(4, 1fr); } /* 4 kolumny na dużych */
 }
 
-/* =========================================================
-   ADMIN – ładne ciemne tabele w kartach
-   ========================================================= */
-
-.admin-page .card .table {
-  /* kolory Bootstrapa pod dark-mode */
-  --bs-table-bg: transparent;
-  --bs-table-color: var(--admin-text);
-  --bs-table-border-color: rgba(55, 65, 81, 0.8);
-  --bs-table-striped-bg: rgba(15, 23, 42, 0.96);
-  --bs-table-striped-color: var(--admin-text);
-  --bs-table-hover-bg: rgba(30, 64, 175, 0.28);
-  --bs-table-hover-color: var(--admin-text);
-
-  margin-bottom: 0;
-  border-radius: 1rem;
+.prod-card {
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
-/* nagłówek tabeli */
-.admin-page .card .table thead {
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.92));
+.prod-img {
+  aspect-ratio: 1/1;
+  object-fit: cover;
+  width: 100%;
 }
 
-.admin-page .card .table thead th {
-  color: var(--admin-muted);
-  border-bottom-color: var(--admin-border);
-  font-size: 0.78rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+.prod-body {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-grow: 1; /* Aby karty miały równą wysokość */
+}
+.prod-body .btn {
+  font-size: 0.8rem; /* Mniejsze przyciski na kartach */
 }
 
-/* komórki – zero białego tła */
-.admin-page .card .table tbody tr > * {
-  background-color: transparent !important;
+.price {
+  font-weight: 700;
+  color: var(--text);
+}
+.stock-ok { color: #10b981; }
+.stock-low { color: #f59e0b; }
+.stock-zero { color: #ef4444; }
+
+/* Paginacja w ciemnym motywie */
+.pagination .page-link {
+  background-color: rgba(15, 23, 42, 0.8);
+  border-color: rgba(55, 65, 81, 0.9);
+  color: #c4b5fd;
+}
+.pagination .page-link:hover {
+  background-color: rgba(30, 64, 175, 0.3);
+}
+.pagination .page-item.active .page-link {
+  background-color: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.pagination .page-item.disabled .page-link {
+  background-color: rgba(15, 23, 42, 0.5);
   border-color: rgba(55, 65, 81, 0.7);
-}
-
-/* ładne paskowanie w dark-mode */
-.admin-page .card .table-striped > tbody > tr:nth-of-type(odd) > * {
-  background-color: rgba(15, 23, 42, 0.96) !important;
-}
-
-.admin-page .card .table-striped > tbody > tr:nth-of-type(even) > * {
-  background-color: rgba(15, 23, 42, 0.9) !important;
-}
-
-/* hover – delikatny glow zamiast szarej plamy */
-.admin-page .card .table tbody tr:hover > * {
-  background-color: rgba(30, 64, 175, 0.32) !important;
+  color: #6b7280;
 }

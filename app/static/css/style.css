@@ -1,329 +1,747 @@
-/* [ZMIANA] Ten plik CSS zastępuje stary style.css oraz style inline
-z base.html i index.html.
+/*
+ * NOWY, LUKSUSOWY CIEMNY ARKUSZ STYLÓW "BIMBEREK" (v5.2)
+ * * TA WERSJA NAPRAWIA SLIDER HERO.
+ * Zmienia nazwy w Sekcji 5 z `.slider-wrap` na `.hero-slider-wrap`
+ * aby dopasować je do pliku `index.html`.
+ */
 
-Zawiera on:
-1. Główny motyw (ciemne tło, gradient, czcionka Montserrat)
-2. Style responsywnego slidera (index.html)
-3. Style responsywnej siatki produktów (index.html)
-*/
+/* --- 1. Import i Główne Zmienne --- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-/* =========================
-   1. GŁÓWNY MOTYW (z base.html)
-   ========================= */
 :root {
-  --nav-bg: #020617;
-  --body-bg: #020617;
-  --accent: #7c3aed;
-  --text: #e5e7eb;
+  --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --color-text: #f9fafb;
+  --color-text-muted: #9ca3af;
+  --color-primary: #7c3aed;
+  --color-primary-hover: #6d28d9;
+  --color-surface: #1f2937;
+  --color-background: #111827;
+  --color-border: #374151;
+  --premium-gradient: linear-gradient(90deg, var(--color-primary), #a855f7);
+  --border-radius: 0.5rem;
+  --border-radius-lg: 0.75rem;
+  --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --box-shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.2);
+  --premium-glow: 0 6px 20px rgba(124, 58, 237, 0.25);
+}
+
+/* --- 2. Animacje i Globalne Style --- */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 body {
-  margin: 0;
-  min-height: 100vh;
-  /* Użycie czcionki Montserrat zdefiniowanej w base.html */
-  font-family: 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  /* Ciemny motyw z gradientem */
-  background:
-    radial-gradient(1200px 600px at 20% -10%, rgba(124, 58, 237, .30), transparent 60%),
-    radial-gradient(1000px 800px at 110% 10%, rgba(59, 130, 246, .25), transparent 60%),
-    var(--body-bg);
-  color: var(--text);
-  /* Poprawka Bootstrapa - domyślny kolor tła dla alertów, kart itp. */
-  --bs-body-bg: transparent;
-  --bs-body-color: var(--text);
-}
-
-.navbar {
-  background: linear-gradient(180deg, rgba(15, 23, 42, .98), rgba(15, 23, 42, .96));
-  border-bottom: 1px solid rgba(30, 64, 175, .55);
-  backdrop-filter: blur(18px);
-}
-
-.navbar-brand,
-.navbar-nav .nav-link {
-  font-weight: 500;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  font-size: .78rem;
-}
-
-.navbar-nav .nav-link {
-  color: rgba(226, 232, 240, .78);
-  font-size: .95rem;
-}
-
-.navbar .nav-link:hover,
-.navbar .nav-link.active {
-  color: #fff;
-}
-
-.footer {
-  background: linear-gradient(180deg, rgba(15, 23, 42, .96), #020617);
-  border-top: 1px solid rgba(30, 64, 175, .55);
-  color: #9ca3af;
-  font-size: .85rem;
-}
-
-a {
-  color: #c4b5fd;
-  text-decoration: none; /* [ZMIANA] Dodane dla pewności */
-}
-
-a:hover {
-  color: #a78bfa;
-}
-
-/* Dostosowanie komponentów Bootstrap do ciemnego motywu */
-.form-control,
-.form-select,
-textarea {
-  background-color: rgba(15, 23, 42, 0.96);
-  border-radius: 0.5rem; /* Mniejsze zaokrąglenie */
-  border: 1px solid rgba(55, 65, 81, 0.9);
-  color: #e5e7eb;
-  font-size: 0.88rem;
-}
-
-.form-control:focus,
-.form-select:focus,
-textarea:focus {
-  border-color: rgba(129, 140, 248, 0.9);
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.5);
-  background-color: rgba(15, 23, 42, 0.98);
-  color: #e5e7eb; /* Wymuszenie koloru tekstu */
-}
-
-.form-control::placeholder {
-  color: #6b7280;
-}
-
-.form-label {
-  font-size: 0.8rem;
-  color: #9ca3af;
-}
-
-/* Poprawki dla dropdownów */
-.dropdown-menu {
-  background-color: #1f2937; /* Ciemne tło */
-  border-color: rgba(55, 65, 81, 0.9);
-}
-.dropdown-item {
-  color: #d1d5db;
-}
-.dropdown-item:hover {
-  background-color: #374151;
-  color: #f9fafb;
-}
-
-/* Alerty - domyślne style Bootstrapa są OK */
-
-/* Admin: mocniejszy kontrast */
-.admin-page .card {
-  background: rgba(15, 23, 42, .98);
-  border-color: rgba(148, 163, 184, .45);
-  color: #e5e7eb;
-}
-
-.admin-page .card * {
-  color: #e5e7eb !important;
-}
-
-.admin-page .text-muted,
-.admin-page .text-muted-soft {
-  color: #9ca3af !important;
-}
-
-
-/* =========================
-   2. STYLE SKLEPU (z index.html)
-   ========================= */
-
-/* kontrast + layout specyficzny dla strony sklepu */
-.section-card {
-  background: rgba(17, 24, 39, .75);
-  border: 1px solid rgba(148, 163, 184, .25);
-  border-radius: 16px; /* Bardziej zaokrąglone */
-}
-
-.section-pad {
-  padding: 14px;
-}
-
-.sidebar {
-  position: sticky;
-  top: 82px; /* Dostosuj do wysokości belki nawigacyjnej */
-}
-
-.muted {
-  color: #9ca3af;
-}
-
-/* slider - responsywny */
-.slider-wrap {
+  font-family: var(--font-family-base);
+  background-color: var(--color-background);
+  color: var(--color-text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   position: relative;
 }
 
-.slider-track {
-  display: flex;
-  overflow: hidden;
-  scroll-behavior: smooth;
-  border-radius: 16px;
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: 
+    radial-gradient(circle at 10% 20%, rgba(124, 58, 237, 0.15), transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(217, 70, 239, 0.12), transparent 40%);
+  z-index: -1;
+  opacity: 0.7;
 }
 
-.slide {
-  padding: 10px;
-  /* Definicja responsywności slidera (zgodnie z opisem) */
-  min-width: 100%; /* 1 element mobilnie */
+h1, h2 {
+  background: var(--premium-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+  font-weight: 700;
+}
+h3, h4, h5, h6 {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+a:hover {
+  color: #a78bfa;
+  text-decoration: none;
+}
+
+/* --- 3. Layout (Nawigacja) --- */
+.navbar {
+  background: rgba(17, 24, 39, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--color-border);
+  position: sticky !important;
+  top: 0;
+  z-index: 1000;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+.navbar .nav-link {
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+.navbar .nav-link:hover {
+  color: var(--color-text);
+}
+.navbar .nav-link.active {
+  color: var(--color-primary);
+}
+
+/* --- 4. Główne Komponenty --- */
+.section-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--box-shadow);
+  overflow: hidden;
+  opacity: 0;
+  animation: fadeIn 0.5s ease-out forwards;
+}
+.section-pad {
+  padding: 1.5rem;
 }
 @media (min-width: 768px) {
-  .slide { min-width: 50%; } /* 2 elementy na tabletach */
-}
-@media (min-width: 1200px) {
-  .slide { min-width: 33.3333%; } /* 3 elementy na desktopie */
+  .section-pad {
+    padding: 2rem;
+  }
 }
 
-.slide-card {
+.btn {
+  border-radius: var(--border-radius);
+  font-weight: 500;
+  transition: all 0.2s ease;
+  padding: 0.6rem 1.2rem;
+  border: 1px solid transparent;
+}
+.btn-primary {
+  background: var(--premium-gradient);
+  border: none;
+  color: #fff;
+}
+.btn-primary:hover {
+  color: #fff;
+  text-decoration: none;
+  transform: translateY(-2px);
+  box-shadow: var(--premium-glow);
+}
+.btn-outline-light {
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+  background: transparent;
+}
+.btn-outline-light:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: var(--color-text-muted);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.form-control {
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+  padding: 0.6rem 1rem;
+  background-color: var(--color-surface); 
+  color: var(--color-text);
+}
+.form-control:focus {
+  border-color: var(--color-primary);
+  background-color: var(--color-surface);
+  box-shadow: 0 0 0 0.25rem rgba(124, 58, 237, 0.2);
+  color: var(--color-text);
+}
+
+.form-label {
+  color: var(--color-text-muted);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+.form-text, .text-muted, .small.text-muted {
+  color: var(--color-text-muted) !important;
+}
+
+/* Alerty (komunikaty Flash) */
+.alert {
+  border-radius: var(--border-radius);
+  border-width: 1px;
+  border-style: solid;
+  padding: 1rem 1.25rem;
+  font-weight: 500;
+  --bs-alert-color: var(--color-text);
+  --bs-alert-bg: var(--color-surface);
+  --bs-alert-border-color: var(--color-border);
+  --bs-btn-close-color: var(--color-text);
+}
+.alert-warning {
+  color: #fde68a;
+  background-color: #3f331b;
+  border-color: #785c13;
+  --bs-alert-color: #fde68a;
+  --bs-alert-bg: #3f331b;
+  --bs-alert-border-color: #785c13;
+  --bs-btn-close-color: #fde68a;
+}
+.alert-danger {
+  color: #fca5a5;
+  background-color: #450a0a;
+  border-color: #991b1b;
+  --bs-alert-color: #fca5a5;
+  --bs-alert-bg: #450a0a;
+  --bs-alert-border-color: #991b1b;
+  --bs-btn-close-color: #fca5a5;
+}
+.alert-success {
+  color: #a7f3d0;
+  background-color: #064e3b;
+  border-color: #065f46;
+  --bs-alert-color: #a7f3d0;
+  --bs-alert-bg: #064e3b;
+  --bs-alert-border-color: #065f46;
+  --bs-btn-close-color: #a7f3d0;
+}
+.alert-info {
+  color: #bfdbfe;
+  background-color: #1e3a8a;
+  border-color: #1e40af;
+  --bs-alert-color: #bfdbfe;
+  --bs-alert-bg: #1e3a8a;
+  --bs-alert-border-color: #1e40af;
+  --bs-btn-close-color: #bfdbfe;
+}
+
+
+/* --- 5. Strona Główna (index.html) --- */
+
+/* * [POPRAWKA V5.2]
+ * Poprawiono style dla slidera "Hero" z `index.html`.
+ * Używamy teraz klas `.hero-slider-wrap`, `.hero-slider-track`, `.hero-slide`.
+ * Style dla starej karuzeli (`.slide-card` itd.) są zostawione poniżej.
+ */
+.hero-slider-wrap {
+  background-color: var(--color-surface);
+  position: relative;
+  /* Usuwamy padding z .section-card, aby slider był od krawędzi do krawędzi */
+  padding: 0;
+  /* `overflow: hidden` jest już na .section-card, co jest OK */
+}
+
+.hero-slider-track {
+  display: flex;
+  overflow: hidden; /* Kluczowe dla logiki JS */
+  scroll-behavior: smooth;
+  /* border-radius jest już na .section-card */
+}
+
+.hero-slide {
+  /* Slajd Hero musi mieć 100% szerokości */
+  min-width: 100%; 
+  /* Usuwamy padding, bo obraz tła ma wypełniać krawędzie */
+  padding: 0; 
+  /* Kluczowe dla pozycjonowania .hero-slide-content */
+  position: relative; 
+  /* Ustawienie proporcji slajdu */
+  aspect-ratio: 16 / 7;
+  overflow: hidden; /* Na wszelki wypadek */
+}
+@media (max-width: 768px) {
+  .hero-slide {
+    aspect-ratio: 16 / 9; /* Wyższy na mobilkach */
+  }
+}
+@media (max-width: 576px) {
+  .hero-slide {
+    aspect-ratio: 4 / 3; /* Jeszcze wyższy na małych ekranach */
+  }
+}
+
+
+/* Style dla obrazka tła w slajdzie */
+.hero-slide-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
   height: 100%;
+  object-fit: cover;
+  z-index: 1;
+  /* Lekkie przyciemnienie obrazka, aby tekst był czytelny */
+  filter: brightness(0.6);
+}
+
+/* Style dla treści na slajdzie (z index.html) */
+.hero-slide-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  color: #fff;
+  
+  /* Wycentrowanie i pozycjonowanie treści */
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  justify-content: center;
+  align-items: flex-start; /* Wyrównanie do lewej */
+  
+  /* Duży padding dla treści */
+  padding: 2rem 3rem;
+  
+  /* Gradient na obrazku, aby tekst był jeszcze czytelniejszy */
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.4) 50%, rgba(0, 0, 0, 0) 100%);
 }
 
-.slide-img {
-  aspect-ratio: 16/9;
-  object-fit: cover;
-  width: 100%;
+@media (min-width: 768px) {
+  .hero-slide-content {
+    padding: 3rem 5rem;
+    width: 75%; /* Ograniczenie szerokości tekstu na dużych ekranach */
+  }
+}
+@media (max-width: 576px) {
+  .hero-slide-content {
+    padding: 1.5rem; /* Mniejszy padding na mobilkach */
+  }
 }
 
-.slide-body {
-  padding: 12px;
+.hero-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  /* Nadpisanie globalnego gradientu h2, bo tu chcemy biały tekst */
+  background: none;
+  -webkit-background-clip: initial;
+  -webkit-text-fill-color: initial;
+  background-clip: initial;
+  text-fill-color: initial;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+@media (max-width: 576px) {
+  .hero-title {
+    font-size: 1.8rem; /* Mniejszy tytuł na mobilkach */
+  }
 }
 
+.hero-desc {
+  font-size: 1.1rem;
+  margin-top: 0.5rem;
+  color: var(--color-text-muted);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  max-width: 600px; /* Ograniczenie szerokości opisu */
+}
+@media (max-width: 576px) {
+  .hero-desc {
+    font-size: 0.9rem; /* Mniejszy opis na mobilkach */
+  }
+}
+
+
+/* Styl przycisków nawigacji slidera (z index.html) */
 .slider-nav {
   position: absolute;
-  right: 10px;
-  bottom: 12px;
+  bottom: 1.5rem; /* Przeniesione na dół dla lepszej widoczności */
+  right: 1.5rem;
   display: flex;
-  gap: 8px;
-  z-index: 10; /* Na wierzchu */
+  gap: 0.5rem;
+  z-index: 10;
+}
+@media (max-width: 576px) {
+  .slider-nav {
+    bottom: 1rem;
+    right: 1rem;
+  }
 }
 
 .slider-btn {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  border: 1px solid rgba(148, 163, 184, .4);
-  background: rgba(2, 6, 23, .6);
-  color: var(--text); /* Kolor ikony */
+  background: rgba(17, 24, 39, 0.5);
   backdrop-filter: blur(4px);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  width: 40px; 
+  height: 40px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0; /* Resetowanie paddingu */
 }
 .slider-btn:hover {
-  background: rgba(30, 64, 175, 0.5);
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+.slider-btn i {
+  font-size: 1.2rem; /* Upewnienie się, że ikona jest widoczna */
+  line-height: 1; /* Wycentrowanie ikony */
 }
 
-/* kategorie (prawa kolumna) */
+
+/* --- Poniżej style dla starej karuzeli "Polecane" --- */
+/* Zostawiamy je na wypadek przywrócienia tej sekcji */
+/* Jeśli istniała klasa .slide, definiujemy ją, aby nie psuć reszty */
+.slide {
+  padding: 1.5rem;
+  min-width: 100%; 
+}
+@media (min-width: 768px) {
+  .slide { min-width: 50%; } /* 2 elementy */
+}
+@media (min-width: 1200px) {
+  .slide { min-width: 33.3333%; } /* 3 elementy */
+}
+
+
+.slide-card {
+  /* To jest karta *wewnątrz* slajdu. */
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-shadow: var(--box-shadow);
+  transition: all 0.3s ease;
+  overflow: hidden; /* Ważne dla obrazka */
+}
+
+.slide-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--premium-glow);
+  border-color: var(--color-primary);
+}
+
+.slide-img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.slide-body {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1; /* Równa wysokość */
+}
+.slide-body .fw-semibold {
+  font-weight: 600;
+  color: var(--color-text);
+}
+.slide-body .price {
+  font-weight: 700;
+  color: var(--color-text);
+}
+.slide-body .muted {
+  font-size: 0.9rem;
+}
+
+
+/* Sidebar kategorii */
+.sidebar {
+  animation: fadeIn 0.5s 0.2s ease-out backwards; /* Opóźniona animacja */
+}
 .cat-list {
   list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  padding-left: 0;
+  margin-bottom: 0;
 }
-
 .cat-link {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  text-decoration: none;
-  padding: 8px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, .35);
-  background: rgba(17, 24, 39, .6);
-  color: #e5e7eb;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
+  display: block;
+  padding: 0.6rem 1rem;
+  border-radius: var(--border-radius);
+  color: var(--color-text-muted);
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+  border: 1px solid transparent;
 }
 .cat-link:hover {
-  background: rgba(148, 163, 184, 0.1);
-  border-color: rgba(148, 163, 184, .5);
+  background-color: rgba(255, 255, 255, 0.03);
+  color: var(--color-text);
+  text-decoration: none;
 }
-
 .cat-link.active {
-  border-color: rgba(168, 85, 247, .8);
-  box-shadow: 0 0 0 2px rgba(168, 85, 247, .25) inset;
-  background: rgba(124, 58, 237, .15);
-  color: #fff;
+  background-color: rgba(124, 58, 237, 0.15);
+  color: #c4b5fd;
+  border-color: rgba(124, 58, 237, 0.3);
+  font-weight: 600;
 }
 
-/* =========================
-   3. GRID PRODUKTÓW (z index.html)
-   ========================= */
-
+/* Grid produktów */
 .grid {
   display: grid;
-  gap: 14px;
-  /* Domyślnie 1 kolumna */
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.5rem;
 }
-/* Definicja responsywnej siatki produktów (zgodnie z opisem) */
-@media (min-width: 576px) {
-  .grid { grid-template-columns: repeat(2, 1fr); } /* 2 kolumny */
-}
-@media (min-width: 992px) {
-  .grid { grid-template-columns: repeat(3, 1fr); } /* 3 kolumny */
-}
-@media (min-width: 1400px) {
-  .grid { grid-template-columns: repeat(4, 1fr); } /* 4 kolumny na dużych */
-}
-
 .prod-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  height: 100%;
+  transition: all 0.3s ease;
+  opacity: 0;
+  animation: fadeIn 0.5s ease-out forwards;
 }
+.prod-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--premium-glow);
+  border-color: var(--color-primary);
+}
+.prod-card:nth-child(1) { animation-delay: 0.05s; }
+.prod-card:nth-child(2) { animation-delay: 0.1s; }
+.prod-card:nth-child(3) { animation-delay: 0.15s; }
+.prod-card:nth-child(4) { animation-delay: 0.2s; }
+.prod-card:nth-child(5) { animation-delay: 0.25s; }
 
 .prod-img {
-  aspect-ratio: 1/1;
-  object-fit: cover;
   width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+  border-bottom: 1px solid var(--color-border);
 }
-
 .prod-body {
-  padding: 12px;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  flex-grow: 1; /* Aby karty miały równą wysokość */
+  flex-grow: 1;
 }
-.prod-body .btn {
-  font-size: 0.8rem; /* Mniejsze przyciski na kartach */
+.prod-body .fw-semibold {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
 }
-
-.price {
+.prod-body .price {
+  font-size: 1.1rem;
   font-weight: 700;
-  color: var(--text);
+  color: var(--color-text);
 }
-.stock-ok { color: #10b981; }
-.stock-low { color: #f59e0b; }
-.stock-zero { color: #ef4444; }
 
-/* Paginacja w ciemnym motywie */
-.pagination .page-link {
-  background-color: rgba(15, 23, 42, 0.8);
-  border-color: rgba(55, 65, 81, 0.9);
-  color: #c4b5fd;
+/* --- 6. Strona Produktu (product_detail.html) --- */
+.product-page-inner { display: grid; gap: 2rem; animation: fadeIn 0.4s ease-out backwards; }
+@media (min-width: 768px) { .product-page-inner { grid-template-columns: 1fr 1fr; align-items: flex-start; } }
+.product-gallery-card { background-color: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--border-radius-lg); overflow: hidden; position: sticky; top: 6rem; box-shadow: var(--box-shadow); }
+.product-gallery-main img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; }
+.product-title { font-size: 2.5rem; font-weight: 700; }
+.product-price { font-size: 2rem; font-weight: 600; color: var(--color-text); }
+.product-main-cta { background: var(--color-surface); padding: 1.5rem; border-radius: var(--border-radius-lg); border: 1px solid var(--color-border); box-shadow: var(--box-shadow); }
+.product-benefits-row { display: grid; gap: 1rem; margin-top: 1.5rem; grid-template-columns: 1fr 1fr 1fr; }
+.product-benefit-card { background: var(--color-background); padding: 1rem; border-radius: var(--border-radius); border: 1px solid var(--color-border); }
+.product-benefit-title { font-weight: 600; font-size: 0.9rem; }
+.product-benefit-text { font-size: 0.85rem; color: var(--color-text-muted); }
+.product-extra { margin-top: 3rem; display: grid; gap: 2rem; animation: fadeIn 0.5s 0.2s ease-out backwards; }
+@media (min-width: 768px) { .product-extra { grid-template-columns: 1fr 1fr; align-items: flex-start; } }
+.product-description-card, .product-comments-card { background-color: var(--color-surface); border: 1px solid var(--color-border); padding: 1.5rem; border-radius: var(--border-radius-lg); box-shadow: var(--box-shadow); }
+.product-description-body { font-size: 1rem; line-height: 1.7; }
+.product-description-body p { margin-bottom: 1rem; color: var(--color-text-muted); }
+.product-description-body h3 { color: var(--color-text); font-weight: 600; margin-top: 1.5rem; }
+
+/* --- 7. Strona Koszyka (cart.html) --- */
+.table thead th { color: var(--color-text-muted); font-weight: 500; font-size: 0.9rem; text-transform: uppercase; border-bottom-width: 2px; border-color: var(--color-border); }
+.table tbody tr { border-bottom: 1px solid var(--color-border); }
+.table tbody tr:last-child { border-bottom: none; }
+.muted { color: var(--color-text-muted) !important; }
+
+/* --- 8. Inne drobne poprawki --- */
+.container-narrow-lg { max-width: 1140px; margin-left: auto; margin-right: auto; padding-left: 1rem; padding-right: 1rem; }
+hr { border-top: 1px solid var(--color-border); opacity: 1; }
+.badge { padding: 0.5em 0.75em; font-size: 0.8rem; font-weight: 500; border-radius: var(--border-radius); }
+.text-bg-success { background-color: #10b981 !important; color: #fff; }
+.text-bg-secondary { background-color: #6b7280 !important; color: #fff; }
+
+
+/* --- SEKCJA 9: Strony Auth (Login/Register) --- */
+.auth-container {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
 }
-.pagination .page-link:hover {
-  background-color: rgba(30, 64, 175, 0.3);
+.auth-card {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--box-shadow-lg);
+  overflow: hidden;
+  opacity: 0;
+  animation: fadeIn 0.5s ease-out forwards;
+  padding: 2rem;
 }
-.pagination .page-item.active .page-link {
-  background-color: var(--accent);
-  border-color: var(--accent);
+@media (min-width: 768px) {
+  .auth-card {
+    padding: 2.5rem;
+  }
+}
+.auth-card .d-grid {
+  margin-top: 1.5rem;
+}
+.auth-card .d-grid .btn {
+  padding-top: 0.8rem;
+  padding-bottom: 0.8rem;
+  font-size: 1rem;
+}
+.auth-card .btn-outline-light {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.auth-card .btn-outline-light svg {
+  width: 18px;
+  height: 18px;
+}
+
+
+/* --- SEKCJA 10: Panel Admina --- */
+.admin-page .container {
+  max-width: 1200px;
+}
+.admin-toolbar {
+  background: var(--color-surface);
+  border-radius: var(--border-radius-lg);
+  padding: 1rem 1.5rem;
+  margin-bottom: 2rem;
+  border: 1px solid var(--color-border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  animation: fadeIn 0.5s ease-out forwards;
+}
+.admin-toolbar .btn-sm {
+  font-size: 0.9rem;
+  padding: 0.4rem 0.8rem;
+}
+
+/* Styl dla tabel panelu admina (np. moderation.html) */
+.admin-page .section-card {
+  padding: 0; 
+}
+.admin-page .card-header {
+  background-color: rgba(0,0,0,0.2);
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+.admin-page .card-header .h5 {
+  margin-bottom: 0;
+  color: var(--color-text);
+}
+.admin-page .card-body {
+  padding: 1.5rem;
+}
+.admin-page .table {
+  --bs-table-color: var(--color-text);
+  --bs-table-bg: transparent;
+  --bs-table-border-color: var(--color-border);
+  --bs-table-striped-bg: rgba(255, 255, 255, 0.02);
+  --bs-table-striped-color: var(--color-text);
+  --bs-table-hover-bg: rgba(255, 255, 255, 0.05);
+  --bs-table-hover-color: var(--color-text);
+  margin-bottom: 0;
+}
+.admin-page .table thead th {
+  color: var(--color-text-muted);
+  font-weight: 500;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.admin-page .table td {
+  vertical-align: middle;
+}
+.admin-page .table .btn-sm {
+  font-size: 0.85rem;
+  padding: 0.3rem 0.6rem;
+}
+
+/* --- SEKCJA 11: Paginacja (z index.html) --- */
+.pagination {
+  --bs-pagination-color: var(--color-text-muted);
+  --bs-pagination-bg: var(--color-surface);
+  --bs-pagination-border-color: var(--color-border);
+  --bs-pagination-hover-color: var(--color-text);
+  --bs-pagination-hover-bg: rgba(255, 255, 255, 0.05);
+  --bs-pagination-hover-border-color: var(--color-border);
+  --bs-pagination-focus-color: var(--color-text);
+  --bs-pagination-focus-bg: rgba(255, 255, 255, 0.05);
+  --bs-pagination-focus-box-shadow: 0 0 0 0.25rem rgba(124, 58, 237, 0.2);
+  --bs-pagination-active-color: #fff;
+  --bs-pagination-active-bg: var(--color-primary);
+  --bs-pagination-active-border-color: var(--color-primary);
+  --bs-pagination-disabled-color: #4b5563; /* Ciemniejszy szary */
+  --bs-pagination-disabled-bg: var(--color-surface);
+  --bs-pagination-disabled-border-color: var(--color-border);
+}
+
+/* --- SEKCJA 12: Strona kategorii (category.html) --- */
+.btn-chip {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  padding: 0.4rem 0.8rem;
+  font-size: 0.9rem;
+}
+.btn-chip:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--color-text);
+}
+.btn-chip.active {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
   color: #fff;
 }
-.pagination .page-item.disabled .page-link {
-  background-color: rgba(15, 23, 42, 0.5);
-  border-color: rgba(55, 65, 81, 0.7);
-  color: #6b7280;
+
+/* Poprawka dla .card na stronie kategorii (używa .product-card) */
+.product-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  transition: all 0.3s ease;
+  opacity: 0;
+  animation: fadeIn 0.5s ease-out forwards;
+  box-shadow: var(--box-shadow);
+}
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--premium-glow);
+  border-color: var(--color-primary);
+}
+.product-card .card-img-top {
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-bottom: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+}
+.product-card .card-body {
+  padding: 1rem;
+}
+.product-card .card-title {
+  color: var(--color-text);
+  font-weight: 600;
+}
+.product-card .card-text {
+  color: var(--color-text-muted);
+}
+.product-card .fw-bold {
+  color: var(--color-text);
+  font-size: 1.1rem;
 }

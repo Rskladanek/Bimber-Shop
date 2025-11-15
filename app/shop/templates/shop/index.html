@@ -1,75 +1,77 @@
 {% extends "base.html" %}
 {% block title %}Sklep{% endblock %}
 
-<!-- Style są w /static/css/style.css, ten blok nie jest już potrzebny -->
 {% block head %}{% endblock %}
 
 {% block content %}
-<div class="container my-3">
+<div class="container my-4">
 
-  <div class="row g-3">
-    <!-- LEWA: SLIDER -->
-    <div class="col-lg-9">
-      {% set slides = (active_slider.items if active_slider and active_slider.items else []) %}
-      {% if slides %}
-      <div class="slider-wrap section-card">
-        <div class="section-pad muted">Polecane</div>
-        <div id="sliderTrack" class="slider-track">
-          {% for it in slides %}
-            {% set p = it.product %}
-            <div class="slide">
-              <div class="slide-card section-card">
-                {% if p and p.image_filename %}
-                  <!-- [ZMIANA] Dodano alt text dla dostępności -->
-                  <img class="slide-img" src="{{ url_for('static', filename='images/products/' ~ p.image_filename) }}" alt="{{ p.name }}">
-                {% else %}
-                  <img class="slide-img" src="https://placehold.co/1600x900/020617/374151?text=Bimberek" alt="Domyślny obrazek">
-                {% endif %}
-                <div class="slide-body">
-                  <div class="d-flex justify-content-between align-items-center">
-                    <div class="fw-semibold">{{ p.name if p else 'Produkt' }}</div>
-                    {% if p %}<div class="price">{{ '%.2f'|format(p.price) }} PLN</div>{% endif %}
-                  </div>
-                  {% if p and p.description_html %}
-                    <div class="muted small">{{ p.description_html|striptags|truncate(120) }}</div>
-                  {% endif %}
-                  {% if p %}
-                  <div class="mt-2 d-flex gap-2">
-                    <a class="btn btn-primary btn-sm" href="{{ url_for('shop.product_detail', product_id=p.id) }}">Zobacz</a>
-                    <form method="post" action="{{ url_for('shop.add_to_cart', product_id=p.id) }}">
-                      {{ csrf_token() if csrf_token is defined else '' }}
-                      <input type="hidden" name="quantity" value="1">
-                      <button class="btn btn-outline-light btn-sm" {% if p.stock is not none and p.stock<=0 %}disabled{% endif %}>Do koszyka</button>
-                    </form>
-                  </div>
-                  {% endif %}
-                </div>
-              </div>
+  <!-- =================================== -->
+  <!-- NOWA SEKCJA "HERO" (PEŁNA SZEROKOKOŚĆ) -->
+  <!-- =================================== -->
+  {% set slides = (active_slider.items if active_slider and active_slider.items else []) %}
+  {% if slides %}
+  <div class="hero-slider-wrap section-card mb-4">
+    <div id="heroSliderTrack" class="hero-slider-track">
+      {% for it in slides %}
+        {% set p = it.product %}
+        {% if p %}
+        <div class="hero-slide">
+          <!-- Obraz jako tło -->
+          {% if p and p.image_filename %}
+            <img class="hero-slide-img" src="{{ url_for('static', filename='images/products/' ~ p.image_filename) }}" alt="{{ p.name }}">
+          {% else %}
+            <img class="hero-slide-img" src="https://placehold.co/1600x900/020617/374151?text=Bimberek" alt="Domyślny obrazek">
+          {% endif %}
+          
+          <!-- Treść na obrazie -->
+          <div class="hero-slide-content">
+            <h2 class="hero-title">{{ p.name if p else 'Produkt Polecany' }}</h2>
+            {% if p and p.description_html %}
+              <p class="hero-desc d-none d-md-block">{{ p.description_html|striptags|truncate(150) }}</p>
+            {% endif %}
+            <div class="mt-3 d-flex gap-2">
+              <a class="btn btn-primary btn-lg" href="{{ url_for('shop.product_detail', product_id=p.id) }}">Zobacz produkt</a>
+              <form method="post" action="{{ url_for('shop.add_to_cart', product_id=p.id) }}">
+                {{ csrf_token() if csrf_token is defined else '' }}
+                <input type="hidden" name="quantity" value="1">
+                <button class="btn btn-outline-light btn-lg d-none d-sm-inline-block" {% if p.stock is not none and p.stock<=0 %}disabled{% endif %}>Do koszyka</button>
+              </form>
             </div>
-          {% endfor %}
+          </div>
         </div>
-        <div class="slider-nav">
-          <button class="slider-btn" id="prevSlide" aria-label="Prev"><i class="bi bi-chevron-left"></i></button>
-          <button class="slider-btn" id="nextSlide" aria-label="Next"><i class="bi bi-chevron-right"></i></button>
-        </div>
-      </div>
-      {% else %}
-        <div class="section-card section-pad muted">Brak aktywnego slidera – dodaj w panelu admina.</div>
-      {% endif %}
+        {% endif %}
+      {% endfor %}
     </div>
+    <!-- Nawigacja slidera (taka sama jak w JS) -->
+    <div class="slider-nav">
+      <button class="slider-btn" id="prevSlide" aria-label="Prev"><i class="bi bi-chevron-left"></i></button>
+      <button class="slider-btn" id="nextSlide" aria-label="Next"><i class="bi bi-chevron-right"></i></button>
+    </div>
+  </div>
+  {% else %}
+    <div class="section-card section-pad muted mb-4">Brak aktywnego slidera – dodaj w panelu admina.</div>
+  {% endif %}
 
-    <!-- PRAWA: KATEGORIE + SZUKAJKA -->
+  <!-- =================================== -->
+  <!-- GŁÓWNA ZAWARTOŚĆ (SIDEBAR + PRODUKTY) -->
+  <!-- =================================== -->
+  <div class="row g-4">
+    
+    <!-- PRAWA (TERAZ LEWA): KATEGORIE + SZUKAJKA -->
     <div class="col-lg-3">
-      <div class="sidebar">
+      <div class="sidebar" style="position: sticky; top: 6rem;">
         <div class="section-card section-pad">
-          <form method="get" action="{{ url_for('shop.index') }}" class="mb-2">
+          <form method="get" action="{{ url_for('shop.index') }}" class="mb-3">
+            <h3 class="h6 mb-2">Szukaj</h3>
             {% if current_category_id %}<input type="hidden" name="cat" value="{{ current_category_id }}">{% endif %}
             <div class="input-group input-group-sm">
               <input type="search" name="q" value="{{ q or '' }}" class="form-control" placeholder="Szukaj produktu...">
               <button class="btn btn-primary"><i class="bi bi-search"></i></button>
             </div>
           </form>
-          <div class="muted small mb-2">Kategorie</div>
+          
+          <h3 class="h6 mb-2">Kategorie</h3>
           <ul class="cat-list">
             <li>
               <a class="cat-link {% if not current_category_id %}active{% endif %}" href="{{ url_for('shop.index') }}">
@@ -88,104 +90,105 @@
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- GRID PRODUKTÓW -->
-  <div class="section-card section-pad mt-3">
-    <div class="d-flex justify-content-between align-items-center mb-2">
-      <div class="fw-semibold">
-        {% if current_category_id %}
-          {{ categories|selectattr('id','equalto',current_category_id)|map(attribute='name')|list|first or 'Kategoria' }}
-        {% else %}
-          Wszystkie produkty
-        {% endif %}
-        {% if q %}<span class="muted">– szukaj: „{{ q }}”</span>{% endif %}
-      </div>
-      {% if q or current_category_id %}
-        <a class="btn btn-outline-light btn-sm" href="{{ url_for('shop.index') }}">Wyczyść filtr</a>
-      {% endif %}
-    </div>
-
-    {% if products and products.items|length %}
-      <div class="grid">
-        {% for p in products.items %}
-          <div class="prod-card section-card">
-            {% if p.image_filename %}
-              <!-- [ZMIANA] Dodano alt text dla dostępności -->
-              <img class="prod-img" src="{{ url_for('static', filename='images/products/' ~ p.image_filename) }}" alt="{{ p.name }}">
+    <!-- LEWA (TERAZ PRAWA): GRID PRODUKTÓW -->
+    <div class="col-lg-9">
+      <div class="section-card section-pad">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 class="h4 mb-0" style="background: none; -webkit-text-fill-color: inherit;">
+            {% if current_category_id %}
+              {{ categories|selectattr('id','equalto',current_category_id)|map(attribute='name')|list|first or 'Kategoria' }}
             {% else %}
-              <img class="prod-img" src="https://placehold.co/600x600/020617/374151?text=Bimberek" alt="Domyślny obrazek">
+              Wszystkie produkty
             {% endif %}
-            <div class="prod-body">
-              <div class="fw-semibold">{{ p.name }}</div>
-              <div class="d-flex justify-content-between">
-                <div class="price">{{ '%.2f'|format(p.price) }} PLN</div>
-                {% if p.stock is not none %}
-                  {% if p.stock<=0 %}
-                    <span class="stock-zero small">Brak</span>
-                  {% elif p.stock<5 %}
-                    <span class="stock-low small">Mało ({{ p.stock }})</span>
-                  {% else %}
-                    <span class="stock-ok small">{{ p.stock }} szt.</span>
-                  {% endif %}
+            {% if q %}<span class="muted small">– szukaj: „{{ q }}”</span>{% endif %}
+          </h2>
+          {% if q or current_category_id %}
+            <a class="btn btn-outline-light btn-sm" href="{{ url_for('shop.index') }}">Wyczyść filtr</a>
+          {% endif %}
+        </div>
+
+        {% if products and products.items|length %}
+          <div class="grid">
+            {% for p in products.items %}
+              <div class="prod-card section-card">
+                {% if p.image_filename %}
+                  <img class="prod-img" src="{{ url_for('static', filename='images/products/' ~ p.image_filename) }}" alt="{{ p.name }}">
+                {% else %}
+                  <img class="prod-img" src="https://placehold.co/600x600/020617/374151?text=Bimberek" alt="Domyślny obrazek">
                 {% endif %}
+                <div class="prod-body">
+                  <div class="fw-semibold">{{ p.name }}</div>
+                  <div class="d-flex justify-content-between">
+                    <div class="price">{{ '%.2f'|format(p.price) }} PLN</div>
+                    {% if p.stock is not none %}
+                      {% if p.stock<=0 %}
+                        <span class="stock-zero small">Brak</span>
+                      {% elif p.stock<5 %}
+                        <span class="stock-low small">Mało ({{ p.stock }})</span>
+                      {% else %}
+                        <span class="stock-ok small">{{ p.stock }} szt.</span>
+                      {% endif %}
+                    {% endif %}
+                  </div>
+                  <div class="d-flex gap-2 mt-auto pt-2">
+                    <a class="btn btn-outline-light btn-sm" href="{{ url_for('shop.product_detail', product_id=p.id) }}">Szczegóły</a>
+                    <form method="post" action="{{ url_for('shop.add_to_cart', product_id=p.id) }}">
+                      {{ csrf_token() if csrf_token is defined else '' }}
+                      <input type="hidden" name="quantity" value="1">
+                      <button class="btn btn-primary btn-sm" {% if p.stock is not none and p.stock<=0 %}disabled{% endif %}>
+                        <i class="bi bi-bag-plus"></i>
+                      </button>
+                    </form>
+                  </div>
+                </div>
               </div>
-              <div class="d-flex gap-2 mt-auto pt-2"> <!-- [ZMIANA] mt-auto aby przyciski były na dole -->
-                <a class="btn btn-outline-light btn-sm" href="{{ url_for('shop.product_detail', product_id=p.id) }}">Szczegóły</a>
-                <form method="post" action="{{ url_for('shop.add_to_cart', product_id=p.id) }}">
-                  {{ csrf_token() if csrf_token is defined else '' }}
-                  <input type="hidden" name="quantity" value="1">
-                  <button class="btn btn-primary btn-sm" {% if p.stock is not none and p.stock<=0 %}disabled{% endif %}>
-                    <i class="bi bi-bag-plus"></i>
-                  </button>
-                </form>
-              </div>
-            </div>
+            {% endfor %}
           </div>
-        {% endfor %}
-      </div>
 
-      <!-- Paginacja -->
-      {% if products.pages > 1 %}
-      <nav class="mt-3 d-flex justify-content-center"> <!-- [ZMIANA] Wyśrodkowanie paginacji -->
-        <ul class="pagination pagination-sm mb-0">
-          <li class="page-item {% if not products.has_prev %}disabled{% endif %}">
-            <a class="page-link" href="{{ url_for('shop.index', cat=current_category_id, q=q, page=products.prev_num) }}">«</a>
-          </li>
-          {% for p_num in products.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-            {% if p_num %}
-              <li class="page-item {% if p_num == products.page %}active{% endif %}">
-                <a class="page-link" href="{{ url_for('shop.index', cat=current_category_id, q=q, page=p_num) }}">{{ p_num }}</a>
+          <!-- Paginacja -->
+          {% if products.pages > 1 %}
+          <nav class="mt-4 d-flex justify-content-center">
+            <ul class="pagination pagination-sm mb-0">
+              <li class="page-item {% if not products.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('shop.index', cat=current_category_id, q=q, page=products.prev_num) }}">«</a>
               </li>
-            {% else %}
-              <li class="page-item disabled"><span class="page-link">…</span></li>
-            {% endif %}
-          {% endfor %}
-          <li class="page-item {% if not products.has_next %}disabled{% endif %}">
-            <a class="page-link" href="{{ url_for('shop.index', cat=current_category_id, q=q, page=products.next_num) }}">»</a>
-          </li>
-        </ul>
-      </nav>
-      {% endif %}
+              {% for p_num in products.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if p_num %}
+                  <li class="page-item {% if p_num == products.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('shop.index', cat=current_category_id, q=q, page=p_num) }}">{{ p_num }}</a>
+                  </li>
+                {% else %}
+                  <li class="page-item disabled"><span class="page-link">…</span></li>
+                {% endif %}
+              {% endfor %}
+              <li class="page-item {% if not products.has_next %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('shop.index', cat=current_category_id, q=q, page=products.next_num) }}">»</a>
+              </li>
+            </ul>
+          </nav>
+          {% endif %}
 
-    {% else %}
-      <div class="alert alert-secondary mb-0">
-        Nic nie znaleziono. Zmień kategorię lub wyszukaj inaczej.
+        {% else %}
+          <div class="alert alert-secondary mb-0">
+            Nic nie znaleziono. Zmień kategorię lub wyszukaj inaczej.
+          </div>
+        {% endif %}
       </div>
-    {% endif %}
+    </div>
   </div>
 </div>
 
-<!-- [ZMIANA] Skrypt wraca na swoje pierwotne miejsce, czyli do bloku 'content' -->
+<!-- Skrypt dla slidera (zmieniony ID tracka) -->
 <script>
   (function(){
-    const track = document.getElementById('sliderTrack');
+    const track = document.getElementById('heroSliderTrack'); // <-- ZMIANA ID
     if (!track) return;
 
     // Funkcja obliczająca krok przesunięcia
     const getStep = () => {
-      const s = track.querySelector('.slide');
-      return s ? s.getBoundingClientRect().width : track.clientWidth; // Użyj szerokości slajdu
+      const s = track.querySelector('.hero-slide'); // <-- ZMIANA KLASY
+      return s ? s.getBoundingClientRect().width : track.clientWidth;
     };
 
     let currentScroll = 0;
@@ -194,43 +197,45 @@
 
     const next = () => {
       const step = getStep();
-      currentScroll += step;
-      // Proste zapętlenie slidera
-      if (currentScroll >= (trackWidth - containerWidth + 1)) { // +1 dla precyzji float
+      // Mały bufor, aby uniknąć problemów z precyzją float
+      if (currentScroll >= (trackWidth - containerWidth - 1)) { 
           track.scrollTo({ left: 0, behavior: 'smooth' });
           currentScroll = 0;
       } else {
           track.scrollBy({ left: step, behavior: 'smooth' });
+          currentScroll += step; // Aktualizuj currentScroll po przewinięciu
       }
     };
 
     const prev = () => {
       const step = getStep();
-      currentScroll -= step;
-      // Zapętlenie do tyłu
-      if (currentScroll < 0) {
+      if (currentScroll <= 0) {
           const newPos = trackWidth - containerWidth;
           track.scrollTo({ left: newPos, behavior: 'smooth' });
           currentScroll = newPos;
       } else {
           track.scrollBy({ left: -step, behavior: 'smooth' });
+          currentScroll -= step; // Aktualizuj currentScroll po przewinięciu
       }
     };
+    
+    // Nasłuchiwanie na 'scrollend' aby zsynchronizować currentScroll
+    // To pomaga, jeśli użytkownik przewinie ręcznie
+    track.addEventListener('scrollend', () => {
+        currentScroll = track.scrollLeft;
+    });
 
     document.getElementById('nextSlide')?.addEventListener('click', next);
     document.getElementById('prevSlide')?.addEventListener('click', prev);
 
-    // Autoplay
-    let autoPlayInterval = setInterval(next, 4000);
+    let autoPlayInterval = setInterval(next, 5000); // Zwolniony autoplay dla hero
     
-    // Pauza na hover
-    const sliderWrap = track.closest('.slider-wrap');
+    const sliderWrap = track.closest('.hero-slider-wrap'); // <-- ZMIANA KLASY
     if (sliderWrap) {
         sliderWrap.addEventListener('mouseenter', () => clearInterval(autoPlayInterval));
-        sliderWrap.addEventListener('mouseleave', () => autoPlayInterval = setInterval(next, 4000));
+        sliderWrap.addEventListener('mouseleave', () => autoPlayInterval = setInterval(next, 5000));
     }
   })();
 </script>
 
-<!-- [ZMIANA] To jest teraz JEDYNY endblock na końcu pliku, zamykający 'content' -->
 {% endblock %}

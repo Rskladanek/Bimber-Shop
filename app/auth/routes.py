@@ -1,9 +1,12 @@
 # app/auth/routes.py
-from flask import render_template, redirect, url_for, flash, request, current_app
+# [POPRAWKA] Dodane importy dla 'session' i 'secrets'
+from flask import render_template, redirect, url_for, flash, request, current_app, session
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import or_
-import uuid  # [ZMIANA] Do generowania losowych haseł dla OAuth
+import uuid
+import secrets # [POPRAWKA] Dodany import do generowania nonce
+import re # [POPRAWKA] Dodany import dla _find_or_create_oauth_user
 
 from . import auth_bp
 from .forms import RegistrationForm, LoginForm
@@ -37,7 +40,6 @@ def register():
         db.session.add(user)
         db.session.commit()
         
-        # [ZMIANA] Logujemy od razu z domyślnym remember=False
         login_user(user) 
         flash("Konto utworzone. Witaj!", "success")
         return redirect(url_for("shop.index"))
@@ -60,16 +62,13 @@ def login():
         else:
             if hasattr(User, "username"):
                 q = User.query.filter(User.username.ilike(ident)).first()
-            # fallback na e-mail, jeśli ktoś podał bez @ (np. lokalna część)
             if q is None:
                 q = User.query.filter(User.email.ilike(f"{ident}%")).first()
 
         if not q or not check_password_hash(q.password_hash, form.password.data):
             flash("Nieprawidłowe dane logowania.", "danger")
-            # [ZMIANA] Zachowanie pól (punkt 2.0) - przekazujemy form
             return render_template("auth/login.html", form=form), 401
 
-        # [ZMIANA] Dodana obsługa "Pamiętaj mnie" (Token 4.0)
         remember_me = form.remember_me.data
         login_user(q, remember=remember_me)
         
@@ -129,6 +128,7 @@ def _find_or_create_oauth_user(provider_name: str, provider_user_id: str, user_i
         # Ustaw unikalną nazwę użytkownika (jeśli model jej wymaga)
         if hasattr(User, "username"):
             base = (name or email.split("@")[0]).replace(" ", "")
+            # Szybka sanitacja nazwy, usunięcie niedozwolonych znaków
             candidate = re.sub(r"[^A-Za-z0-9_.\-]", "", base)[:30] or "user"
             
             i = 0
@@ -138,7 +138,6 @@ def _find_or_create_oauth_user(provider_name: str, provider_user_id: str, user_i
                 candidate = candidate[:(32 - len(suffix))] + suffix
             user.username = candidate
 
-        # Ustaw domyślną rolę
         if hasattr(User, "role") and not getattr(user, "role", None):
             user.role = "user"
             
@@ -193,7 +192,12 @@ def google_login():
         flash("Logowanie Google nie jest skonfigurowane.", "warning")
         return redirect(url_for("auth.login"))
     redirect_uri = url_for("auth.google_callback", _external=True)
-    return oauth.google.authorize_redirect(redirect_uri)
+    
+    # [POPRAWKA 1] Wygeneruj i zapisz nonce w sesji
+    nonce = secrets.token_urlsafe(16)
+    session['google_oauth_nonce'] = nonce
+    
+    return oauth.google.authorize_redirect(redirect_uri, nonce=nonce)
 
 
 @auth_bp.route("/google/callback")
@@ -203,11 +207,19 @@ def google_callback():
 
     try:
         token = oauth.google.authorize_access_token()
-        # parse_id_token automatycznie weryfikuje token
-        userinfo = oauth.google.parse_id_token(token)
+        
+        # [POPRAWKA 2] Pobierz nonce z sesji
+        nonce = session.pop('google_oauth_nonce', None)
+        if not nonce:
+            raise Exception("Brak 'nonce' w sesji. Możliwa próba ataku CSRF.")
+            
+        # [POPRAWKA 3] Przekaż nonce do weryfikacji
+        userinfo = oauth.google.parse_id_token(token, nonce=nonce)
+        
     except Exception as e:
         current_app.logger.error(f"Błąd autoryzacji Google: {e}")
-        flash("Błąd logowania przez Google. Spróbuj ponownie.", "danger")
+        # [POPRAWKA 4] Pokaż faktyczny błąd, aby ułatwić debugowanie
+        flash(f"Błąd logowania przez Google: {str(e)}. Spróbuj ponownie.", "danger")
         return redirect(url_for("auth.login"))
 
     if not userinfo:
@@ -226,11 +238,9 @@ def google_callback():
         flash("Zalogowano przez Google.", "success")
         return redirect(url_for("shop.index"))
     else:
-        # Komunikat flash został już ustawiony w funkcji pomocniczej
         return redirect(url_for("auth.login"))
 
 
-# [ZMIANA] Dodane endpointy dla Facebook (Logowanie 5.0)
 # ---------- Facebook OAuth (Authlib) ----------
 @auth_bp.route("/facebook/login")
 def facebook_login():
@@ -274,5 +284,4 @@ def facebook_callback():
         flash("Zalogowano przez Facebook.", "success")
         return redirect(url_for("shop.index"))
     else:
-        # Komunikat flash został już ustawiony w funkcji pomocniczej
         return redirect(url_for("auth.login"))
